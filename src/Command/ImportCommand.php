@@ -19,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use Tightenco\Collect\Support\Collection;
 
-class DatabaseImportCommand extends Command
+class ImportCommand extends Command
 {
     protected static $defaultName = 'conimex:import';
 

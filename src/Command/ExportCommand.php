@@ -20,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use Tightenco\Collect\Support\Collection;
 
-class DatabaseExportCommand extends Command
+class ExportCommand extends Command
 {
     protected static $defaultName = 'conimex:export';
 

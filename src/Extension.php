@@ -14,7 +14,7 @@ class Extension extends BaseExtension
      */
     public function getName(): string
     {
-        return 'BobdenOtter Conimex';
+        return 'Conimex - Content, Import, Export';
     }
 
     /**
@@ -23,16 +23,16 @@ class Extension extends BaseExtension
      * Note: These are cached by Symfony. If you make modifications to this, run
      * `bin/console cache:clear` to ensure your routes are parsed.
      */
-    public function getRoutes(): array
-    {
-        return [
-            'reference' => new Route(
-                '/extensions/reference/{name}',
-                ['_controller' => 'BobdenOtter\Conimex\Controller::index'],
-                ['name' => '[a-zA-Z0-9]+']
-            ),
-        ];
-    }
+//    public function getRoutes(): array
+//    {
+//        return [
+//            'reference' => new Route(
+//                '/extensions/reference/{name}',
+//                ['_controller' => 'BobdenOtter\Conimex\Controller::index'],
+//                ['name' => '[a-zA-Z0-9]+']
+//            ),
+//        ];
+//    }
 
     /**
      * Ran automatically, if the current request is in a browser.
@@ -43,13 +43,13 @@ class Extension extends BaseExtension
      */
     public function initialize($cli = false): void
     {
-        $this->addWidget(new ReferenceWidget());
-
-        $this->addTwigExtension(new Twig());
-
-        $this->addTwigNamespace('conimex');
-
-        $this->addListener('kernel.response', [new EventListener(), 'handleEvent']);
+//        $this->addWidget(new ReferenceWidget());
+//
+//        $this->addTwigExtension(new Twig());
+//
+//        $this->addTwigNamespace('conimex');
+//
+//        $this->addListener('kernel.response', [new EventListener(), 'handleEvent']);
     }
 
     /**
