@@ -1,31 +1,25 @@
 <?php
 
-namespace App\Conimex;
+declare(strict_types=1);
+
+namespace BobdenOtter\Conimex;
 
 use Bolt\Configuration\Config;
-use Bolt\Configuration\Content\ContentType;
 use Bolt\Entity\Content;
-use Bolt\Entity\Taxonomy;
 use Bolt\Entity\User;
 use Bolt\Repository\ContentRepository;
 use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
-use Carbon\Carbon;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
-use Tightenco\Collect\Support\Collection;
 
 class Export
 {
     /** @var SymfonyStyle */
     private $io;
-
-    /** @var EntityManagerInterface */
-    private $em;
 
     /** @var ContentRepository */
     private $contentRepository;
@@ -33,36 +27,24 @@ class Export
     /** @var UserRepository */
     private $userRepository;
 
-    /** @var TaxonomyRepository */
-    private $taxonomyRepository;
-
-    /** @var Config */
-    private $config;
-
     /** @var \Bolt\Doctrine\Version */
     private $dbVersion;
-
-    /** @var OutputInterface */
-    private $output;
 
     public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository, \Bolt\Doctrine\Version $dbVersion)
     {
         $this->contentRepository = $em->getRepository(Content::class);
         $this->userRepository = $em->getRepository(User::class);
-        $this->taxonomyRepository = $em->getRepository(Taxonomy::class);
 
-        $this->em = $em;
         $this->config = $config;
-        $this->taxonomyRepository = $taxonomyRepository;
         $this->dbVersion = $dbVersion;
     }
 
-    public function setIO(SymfonyStyle $io)
+    public function setIO(SymfonyStyle $io): void
     {
         $this->io = $io;
     }
 
-    public function export(string $filename)
+    public function export(string $filename): void
     {
         $output = [];
 
@@ -77,13 +59,11 @@ class Export
 
     private function buildMeta()
     {
-        $meta = [
+        return [
             'date' => date('c'),
             'version' => Version::fullName(),
-            'platform' => $this->dbVersion->getPlatform()
-            ];
-
-        return $meta;
+            'platform' => $this->dbVersion->getPlatform(),
+        ];
     }
 
     private function buildUsers()
@@ -122,6 +102,4 @@ class Export
 
         return $content;
     }
-
-
 }

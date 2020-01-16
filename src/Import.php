@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Conimex;
+declare(strict_types=1);
+
+namespace BobdenOtter\Conimex;
 
 use Bolt\Configuration\Config;
 use Bolt\Configuration\Content\ContentType;
@@ -47,19 +49,19 @@ class Import
         $this->taxonomyRepository = $taxonomyRepository;
     }
 
-    public function setIO(SymfonyStyle $io)
+    public function setIO(SymfonyStyle $io): void
     {
         $this->io = $io;
     }
 
-    public function import(array $yaml)
+    public function import(array $yaml): void
     {
-        foreach($yaml as $contenttypeslug => $data) {
-            if ($contenttypeslug == '__bolt_export_meta') {
+        foreach ($yaml as $contenttypeslug => $data) {
+            if ($contenttypeslug === '__bolt_export_meta') {
                 continue;
             }
 
-            if ($contenttypeslug == '__users') {
+            if ($contenttypeslug === '__users') {
                 // @todo Add flag to skip importing users
 
                 $this->importUsers($data);
@@ -75,19 +77,16 @@ class Import
      * Bolt 3 exports have one block for each contenttype. Bolt 4 exports have only one 'content' block.
      *
      * We either use the name of the block, or an explicitly set 'contentType'
-     *
-     * @param string $contenttypeslug
-     * @param array $data
      */
-    private function importContentType(string $contenttypeslug, array $data)
+    private function importContentType(string $contenttypeslug, array $data): void
     {
-        $this->io->comment("Importing ContentType " . $contenttypeslug);
+        $this->io->comment('Importing ContentType ' . $contenttypeslug);
 
         $progressBar = new ProgressBar($this->io, count($data));
         $progressBar->setBarWidth(50);
         $progressBar->start();
 
-        $count=0;
+        $count = 0;
 
         foreach ($data as $record) {
             $record = new Collection($record);
@@ -96,13 +95,13 @@ class Import
             $contentType = $this->config->getContentType($record->get('contentType', $contenttypeslug));
 
             if (! $contentType) {
-                $this->io->error("Requested ContentType " . $record->get('contentType', $contenttypeslug) . " is not defined in contenttypes.yaml.");
+                $this->io->error('Requested ContentType ' . $record->get('contentType', $contenttypeslug) . ' is not defined in contenttypes.yaml.');
                 return;
             }
 
             $this->importRecord($contentType, $record);
 
-            if ($count++ % 3 == 0) {
+            if ($count++ % 3 === 0) {
                 $this->em->clear();
             }
 
@@ -111,10 +110,9 @@ class Import
 
         $progressBar->finish();
         $this->io->newLine();
-
     }
 
-    private function importRecord(ContentType $contentType, Collection $record)
+    private function importRecord(ContentType $contentType, Collection $record): void
     {
         $user = $this->guesstimateUser($record);
 
@@ -122,7 +120,7 @@ class Import
         /** @var Content $content */
         $content = $this->contentRepository->findOneByFieldValue('slug', $slug);
 
-        if (!$content) {
+        if (! $content) {
             $content = new Content($contentType);
             $content->setStatus('published');
             $content->setAuthor($user);
@@ -185,17 +183,14 @@ class Import
         }
 
         // Fall back to the first user we can find. 🤷‍
-        if (!$user) {
+        if (! $user) {
             $user = $this->userRepository->findOneBy([]);
         }
 
         return $user;
     }
 
-    /**
-     * @param array $data
-     */
-    private function importUsers(array $data)
+    private function importUsers(array $data): void
     {
         foreach ($data as $importUser) {
             $importUser = new Collection($importUser);
@@ -213,7 +208,7 @@ class Import
             $roles = $importUser->get('roles');
 
             // Bolt 3 fallback
-            if (!in_array('ROLE_USER', $roles) && !in_array('ROLE_EDITOR', $roles)) {
+            if (! in_array('ROLE_USER', $roles, true) && ! in_array('ROLE_EDITOR', $roles, true)) {
                 $roles[] = 'ROLE_EDITOR';
             }
 
@@ -224,13 +219,11 @@ class Import
             $user->setRoles($roles);
             $user->setLocale($importUser->get('locale', 'en'));
             $user->setBackendTheme($importUser->get('backendTheme', 'default'));
-            $user->isDisabled($importUser->get('disabled', !$importUser->get('enabled')));
+            $user->isDisabled($importUser->get('disabled', ! $importUser->get('enabled')));
 
             $this->em->persist($user);
 
             $this->em->flush();
-
         }
     }
-
 }
