@@ -10,6 +10,16 @@ Installation:
 composer require BobdenOtter/conimex
 ```
 
+Add to `services.yaml`
+
+```yaml
+
+    BobdenOtter\Conimex\:
+        resource: '../vendor/bobdenotter/conimex/src/*'
+        exclude: '../vendor/bobdenotter/conimex/src/{Entity,Exception,Kernel.php}'
+
+```
+
 
 ## Running PHPStan and Easy Codings Standard
 
