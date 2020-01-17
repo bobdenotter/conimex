@@ -141,14 +141,14 @@ class Import
         }
 
         // Import Bolt 4 Fields
-        foreach ($record->get('fields') as $key => $item) {
+        foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
                 $content->setFieldValue($key, $item);
             }
         }
 
         // Import Bolt 4 Taxonomies
-        foreach ($record->get('taxonomies') as $key => $item) {
+        foreach ($record->get('taxonomies', []) as $key => $item) {
             if ($content->hasTaxonomyDefined($key)) {
                 foreach ($item as $slug => $name) {
                     if ($slug) {
