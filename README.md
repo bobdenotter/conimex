@@ -1,14 +1,29 @@
-# Acme Conimex
+# Conimex: Content Importer and Exporter
 
-Author: YourNameHere
+Author: Bob den Otter <bobdenotter@gmail.com>
 
-This Bolt extension can be used as a starting point to base your own extensions on.
+Extension to export your bolt content as YAML, and import it again.
 
-Installation:
+## Installation:
 
 ```bash
 composer require BobdenOtter/conimex
 ```
+
+## Usage: 
+
+Exporting: 
+
+```bash
+bin/console conimex:export websitename.yaml
+```
+
+Importing: 
+
+```bash
+bin/console conimex:import websitename.yaml
+```
+
 
 <!---
 Add to `services.yaml`
