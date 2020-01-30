@@ -10,6 +10,7 @@ Installation:
 composer require BobdenOtter/conimex
 ```
 
+<!---
 Add to `services.yaml`
 
 ```yaml
@@ -19,6 +20,7 @@ Add to `services.yaml`
         exclude: '../vendor/bobdenotter/conimex/src/{Entity,Exception,Kernel.php}'
 
 ```
+-->
 
 
 ## Running PHPStan and Easy Codings Standard
