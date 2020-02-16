@@ -1,6 +1,6 @@
 {
     "name": "bobdenotter/conimex",
-    "description": "🍛 Content Importer and Exporter",
+    "description": "🍛 Extension to Import and Export content as Yaml files",,
     "type": "bolt-extension",
     "license": "MIT",
     "authors": [
