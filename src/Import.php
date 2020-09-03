@@ -149,7 +149,14 @@ class Import
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-                $content->setFieldValue($key, $item);
+
+                if ($this->isLocalisedField($content, $key, $item)) {
+                    foreach ($item as $locale => $value) {
+                        $content->setFieldValue($key, $value, $locale);
+                    }
+                } else {
+                    $content->setFieldValue($key, $item);
+                }
             }
         }
 
@@ -177,6 +184,27 @@ class Import
 
         $this->em->persist($content);
         $this->em->flush();
+    }
+
+    private function isLocalisedField(Content $content, string $key, $item): bool
+    {
+        $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
+
+        if (!$fieldDefinition['localize']) {
+            return false;
+        }
+
+        if (!is_array($item)) {
+            return false;
+        }
+
+        foreach ($item as $key => $value) {
+            if (! preg_match('/^[a-z]{2}([_-][a-z]{2,3})?$/i', $key)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function guesstimateUser(Collection $record)
@@ -225,7 +253,7 @@ class Import
             $user->setRoles($roles);
             $user->setLocale($importUser->get('locale', 'en'));
             $user->setBackendTheme($importUser->get('backendTheme', 'default'));
-            $user->isDisabled($importUser->get('disabled', ! $importUser->get('enabled')));
+            $user->setStatus($importUser->get('status', ($importUser->get('enabled') ? 'enabled' : 'disabled')));
 
             $this->em->persist($user);
 
