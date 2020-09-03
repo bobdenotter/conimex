@@ -30,20 +30,19 @@ class ExportCommand extends Command
     {
         $this
             ->setDescription('Export Content from Bolt to Yaml')
-            ->addArgument('arg1', InputArgument::OPTIONAL, 'filename of the file to export')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description');
+            ->addArgument('filename', InputArgument::REQUIRED, 'filename of the file to export');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): void
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
         $this->export->setIO($io);
 
-        $filename = $input->getArgument('arg1');
+        $filename = $input->getArgument('filename');
 
         if ($filename) {
-            $io->note(sprintf('You passed an argument: %s', $filename));
+            $io->note(sprintf('Exporting Bolt database contents as: %s', $filename));
         }
 
         if (! realpath($filename)) {
@@ -53,5 +52,7 @@ class ExportCommand extends Command
         $this->export->export($filename);
 
         $io->success('Done.');
+
+        return 1;
     }
 }

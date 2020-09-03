@@ -31,20 +31,19 @@ class ImportCommand extends Command
     {
         $this
             ->setDescription('Import Content from YAML into Bolt')
-            ->addArgument('arg1', InputArgument::OPTIONAL, 'filename of the file to import')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description');
+            ->addArgument('filename', InputArgument::REQUIRED, 'filename of the file to import');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): void
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
         $this->import->setIO($io);
 
-        $filename = $input->getArgument('arg1');
+        $filename = $input->getArgument('filename');
 
         if ($filename) {
-            $io->note(sprintf('You passed an argument: %s', $filename));
+            $io->note(sprintf('Importing Bolt database contents from: %s', $filename));
         }
 
         if (! realpath($filename)) {
@@ -58,5 +57,7 @@ class ImportCommand extends Command
         $this->import->import($yaml);
 
         $io->success('Done.');
+
+        return 1;
     }
 }
