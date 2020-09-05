@@ -7,7 +7,7 @@ Extension to export your bolt content as YAML, and import it again.
 ## Installation:
 
 ```bash
-composer require BobdenOtter/conimex
+composer require bobdenOtter/conimex
 ```
 
 ## Usage: 
