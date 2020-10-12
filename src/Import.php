@@ -130,7 +130,7 @@ class Import
         }
 
         /** @var Content $content */
-        $content = $this->contentRepository->findOneByFieldValue('slug', $slug);
+        $content = $this->contentRepository->findOneByFieldValue('slug', $slug,$contentType);
 
         if (! $content) {
             $content = new Content($contentType);
