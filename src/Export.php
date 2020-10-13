@@ -8,6 +8,8 @@ use Bolt\Configuration\Config;
 use Bolt\Entity\Content;
 use Bolt\Entity\User;
 use Bolt\Repository\ContentRepository;
+use Bolt\Repository\RelationRepository;
+use Bolt\Entity\Relation;
 use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
@@ -30,10 +32,17 @@ class Export
     /** @var \Bolt\Doctrine\Version */
     private $dbVersion;
 
-    public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository, \Bolt\Doctrine\Version $dbVersion)
+    /** @var RelationRepository */
+    private $relationRepository;
+
+    public function __construct(EntityManagerInterface $em, Config $config,
+                                TaxonomyRepository $taxonomyRepository,
+                                \Bolt\Doctrine\Version $dbVersion,
+                                RelationRepository $relationRepository)
     {
         $this->contentRepository = $em->getRepository(Content::class);
         $this->userRepository = $em->getRepository(User::class);
+        $this->relationRepository = $relationRepository;
 
         $this->config = $config;
         $this->dbVersion = $dbVersion;
@@ -82,20 +91,38 @@ class Export
 
     private function buildContent()
     {
+        $offset = 0;
+        $limit = 100;
         $content = [];
-
-        $contentEntities = $this->contentRepository->findAll();
-
+        $contentEntities = [];
         $progressBar = new ProgressBar($this->io, count($contentEntities));
         $progressBar->setBarWidth(50);
         $progressBar->start();
 
-        /** @var Content $record */
-        foreach ($contentEntities as $record) {
-            $content[] = $record->toArray();
+        do {
+            $contentEntities = $this->contentRepository->findBy([], [], $limit, $limit * $offset);
+            /** @var Content $record */
+            foreach ($contentEntities as $record) {
+                $currentITem = $record->toArray();
+                $currentITem['relations'] = [];
+                $relationsDefinition = $record->getDefinition()->get('relations');
 
-            $progressBar->advance();
-        }
+                foreach ($relationsDefinition as $fieldName => $relationDefinition) {
+                    $relations = $this->relationRepository->findRelations($record, $fieldName);
+                    $relationsSlug = [];
+
+                    /** @var Relation $relation */
+                    foreach ($relations as $relation) {
+                        $relationsSlug[] = $relation->getToContent()->getContentType() . '/' . $relation->getToContent()->getSlug();
+                    }
+                    $currentITem['relations'][$fieldName] = $relationsSlug;
+                }
+
+                $content[] = $currentITem;
+                $progressBar->advance();
+            }
+            $offset++;
+        } while ($contentEntities);
 
         $progressBar->finish();
         $this->io->newLine();

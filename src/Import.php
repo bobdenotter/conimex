@@ -9,9 +9,11 @@ use Bolt\Configuration\Content\ContentType;
 use Bolt\Entity\Content;
 use Bolt\Entity\Taxonomy;
 use Bolt\Entity\User;
+use Bolt\Entity\Relation;
 use Bolt\Repository\ContentRepository;
 use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
+use Bolt\Repository\RelationRepository;
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -35,10 +37,13 @@ class Import
     /** @var TaxonomyRepository */
     private $taxonomyRepository;
 
+    /** @var RelationRepository */
+    private $relationRepository;
+
     /** @var Config */
     private $config;
 
-    public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository)
+    public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository, RelationRepository $relationRepository)
     {
         $this->contentRepository = $em->getRepository(Content::class);
         $this->userRepository = $em->getRepository(User::class);
@@ -47,6 +52,7 @@ class Import
         $this->em = $em;
         $this->config = $config;
         $this->taxonomyRepository = $taxonomyRepository;
+        $this->relationRepository = $relationRepository;
     }
 
     public function setIO(SymfonyStyle $io): void
@@ -124,7 +130,7 @@ class Import
         }
 
         /** @var Content $content */
-        $content = $this->contentRepository->findOneByFieldValue('slug', $slug);
+        $content = $this->contentRepository->findOneBySlug($slug, $contentType);
 
         if (! $content) {
             $content = new Content($contentType);
@@ -182,6 +188,31 @@ class Import
             $content->setDepublishedAt(null);
         }
 
+        //import relations
+        foreach ($content->getDefinition()->get('relations') as $key => $relation) {
+            if (isset($record[$key])) {
+
+                // Remove old ones
+                $currentRelations = $this->relationRepository->findRelations($content, null, true, null, false);
+                foreach ($currentRelations as $currentRelation) {
+                    $this->em->remove($currentRelation);
+                }
+
+                //create new relation
+                foreach ($record[$key] as $relationSource) {
+                    $item = explode('/', $relationSource);
+                    $contentType = ContentType::factory($item[0], $this->config->get('contenttypes'));
+                    $contentTo = $this->contentRepository->findOneBySlug($item[1], $contentType);
+                    if ($contentTo === null) {
+                        continue;
+                    }
+                    $relation = new Relation($content, $contentTo);
+                    $this->em->persist($relation);
+                }
+            }
+        }
+
+        
         $this->em->persist($content);
         $this->em->flush();
     }
