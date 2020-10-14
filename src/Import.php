@@ -145,8 +145,14 @@ class Import
             }
             if ($content->hasTaxonomyDefined($key)) {
                 foreach ($item as $taxo) {
-                    if ($taxo['slug']) {
-                        $content->addTaxonomy($this->taxonomyRepository->factory($key, $taxo['slug'], $taxo['name']));
+                    
+                    $configForTaxonomy = $this->config->getTaxonomy($key);
+                    if ($taxo['slug'] &&
+                        $configForTaxonomy !== null &&
+                        $configForTaxonomy['options']->get($taxo['slug']) !== null) {
+                        $content->addTaxonomy($this->taxonomyRepository->factory($key,
+                            $taxo['slug'],
+                            $configForTaxonomy['options']->get($taxo['slug'])));
                     }
                 }
             }
