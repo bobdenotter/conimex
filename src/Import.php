@@ -148,7 +148,7 @@ class Import
                 $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
                 if (count($availableLocales) > 0 && $fieldDefinition['localize']) {
                     foreach ($availableLocales as $locale) {
-                        if (isset($record[$locale . 'data'])) {
+                        if (isset($record[$locale . 'data']) && $record[$locale . 'data'] !== null) {
                             $localizeFields = json_decode($record[$locale . 'data'], true);
                             if (isset($localizeFields[$key])) {
                                 $content->setFieldValue($key, $localizeFields[$key], $locale);
