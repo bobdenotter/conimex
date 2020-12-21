@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace BobdenOtter\Conimex;
 
+use BobdenOtter\Conimex\OutputParser\CsvParser;
+use BobdenOtter\Conimex\OutputParser\OutputParserFactory;
 use Bolt\Configuration\Config;
 use Bolt\Entity\Content;
 use Bolt\Entity\User;
@@ -16,7 +18,6 @@ use Bolt\Version;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Yaml\Yaml;
 
 class Export
 {
@@ -53,17 +54,23 @@ class Export
         $this->io = $io;
     }
 
-    public function export(string $filename): void
+    public function export(string $filename, ?string $contentType): void
     {
         $output = [];
 
         $output['__bolt_export_meta'] = $this->buildMeta();
-        $output['__users'] = $this->buildUsers();
-        $output['content'] = $this->buildContent();
+        $output['__users']  = $this->buildUsers();
+        $output['content'] = $this->buildContent($contentType);
 
-        $yaml = Yaml::dump($output, 4);
+        $parser = OutputParserFactory::factory(pathinfo($filename, PATHINFO_EXTENSION));
 
-        file_put_contents($filename, $yaml);
+        if ($parser instanceof CsvParser) {
+            $message = 'The CSV export support is experimental. You should only use it to export one ContentType at a time.';
+            $message .= ' Otherwise, the exported results may be inaccurate.';
+            $this->io->warning($message);
+        }
+
+        $parser->parse($output, $filename);
     }
 
     private function buildMeta()
@@ -89,7 +96,7 @@ class Export
         return $users;
     }
 
-    private function buildContent()
+    private function buildContent(?string $contentType)
     {
         $offset = 0;
         $limit = 100;
@@ -99,8 +106,13 @@ class Export
         $progressBar->setBarWidth(50);
         $progressBar->start();
 
+        $criteria = [];
+        if ($contentType) {
+            $criteria['contentType'] = $contentType;
+        }
+
         do {
-            $contentEntities = $this->contentRepository->findBy([], [], $limit, $limit * $offset);
+            $contentEntities = $this->contentRepository->findBy($criteria, [], $limit, $limit * $offset);
             /** @var Content $record */
             foreach ($contentEntities as $record) {
                 $currentITem = $record->toArray();
