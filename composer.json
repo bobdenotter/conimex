@@ -11,7 +11,8 @@
     ],
     "require": {
         "php": "^7.2.5",
-        "twig/twig": "^2.0 || ^3.0"
+        "twig/twig": "^2.0 || ^3.0",
+        "league/csv": "^9.6"
     },
     "require-dev": {
         "bolt/core": "^4.0.0",
