@@ -59,9 +59,10 @@ class Export
         $output = [];
 
         $output['__bolt_export_meta'] = $this->buildMeta();
-        $output['__users']  = $this->buildUsers();
+        $output['__users'] = $this->buildUsers();
         $output['content'] = $this->buildContent($contentType);
 
+        // Create a parser based on the requested file extension.
         $parser = OutputParserFactory::factory(pathinfo($filename, PATHINFO_EXTENSION));
 
         if ($parser instanceof CsvParser) {
