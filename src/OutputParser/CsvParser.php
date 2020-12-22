@@ -12,19 +12,19 @@ class CsvParser extends AbstractParser implements OutputParserInterface
 
         $rows = collect($output['content'])->map(function($content) {
             if ($content['createdAt'] instanceof \DateTime) {
-                $content['createdAt'] = $content['createdAt']->format('d.m.Y');
+                $content['createdAt'] = $content['createdAt']->format('d.m.Y H:i:s');
             }
 
             if ($content['modifiedAt'] instanceof \DateTime) {
-                $content['modifiedAt'] = $content['modifiedAt']->format('d.m.Y');
+                $content['modifiedAt'] = $content['modifiedAt']->format('d.m.Y H:i:s');
             }
 
             if ($content['publishedAt'] instanceof \DateTime) {
-                $content['publishedAt'] = $content['publishedAt']->format('d.m.Y');
+                $content['publishedAt'] = $content['publishedAt']->format('d.m.Y H:i:s');
             }
 
             if ($content['depublishedAt'] instanceof \DateTime) {
-                $content['depublishedAt'] = $content['depublishedAt']->format('d.m.Y');
+                $content['depublishedAt'] = $content['depublishedAt']->format('d.m.Y H:i:s');
             }
 
             $content['author'] = $content['author']['username'];
