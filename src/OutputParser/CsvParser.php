@@ -28,6 +28,8 @@ class CsvParser extends AbstractParser implements OutputParserInterface
             }
 
             $content['author'] = $content['author']['username'];
+            
+            unset($content['twig']);
 
             return collect($content)->flatten()->toArray();
         });
