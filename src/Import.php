@@ -7,13 +7,13 @@ namespace BobdenOtter\Conimex;
 use Bolt\Configuration\Config;
 use Bolt\Configuration\Content\ContentType;
 use Bolt\Entity\Content;
+use Bolt\Entity\Relation;
 use Bolt\Entity\Taxonomy;
 use Bolt\Entity\User;
-use Bolt\Entity\Relation;
 use Bolt\Repository\ContentRepository;
+use Bolt\Repository\RelationRepository;
 use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
-use Bolt\Repository\RelationRepository;
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -102,6 +102,7 @@ class Import
 
             if (! $contentType) {
                 $this->io->error('Requested ContentType ' . $record->get('contentType', $contenttypeslug) . ' is not defined in contenttypes.yaml.');
+
                 return;
             }
 
@@ -141,9 +142,8 @@ class Import
         // Import Bolt 3 Fields and Taxonomies
         foreach ($record as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-                
                 $content->setFieldValue($key, $item);
-                
+
                 //import localize field if needed
                 $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
                 if (count($availableLocales) > 0 && $fieldDefinition['localize']) {
@@ -159,7 +159,6 @@ class Import
             }
             if ($content->hasTaxonomyDefined($key)) {
                 foreach ($item as $taxo) {
-                    
                     $configForTaxonomy = $this->config->getTaxonomy($key);
                     if ($taxo['slug'] &&
                         $configForTaxonomy !== null &&
@@ -175,7 +174,6 @@ class Import
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-
                 if ($this->isLocalisedField($content, $key, $item)) {
                     foreach ($item as $locale => $value) {
                         $content->setFieldValue($key, $value, $locale);
@@ -211,7 +209,6 @@ class Import
         //import relations
         foreach ($content->getDefinition()->get('relations') as $key => $relation) {
             if (isset($record[$key])) {
-
                 // Remove old ones
                 $currentRelations = $this->relationRepository->findRelations($content, null, true, null, false);
                 foreach ($currentRelations as $currentRelation) {
@@ -232,7 +229,6 @@ class Import
             }
         }
 
-        
         $this->em->persist($content);
         $this->em->flush();
     }
@@ -241,11 +237,11 @@ class Import
     {
         $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
 
-        if (!$fieldDefinition['localize']) {
+        if (! $fieldDefinition['localize']) {
             return false;
         }
 
-        if (!is_array($item)) {
+        if (! is_array($item)) {
             return false;
         }
 
@@ -286,7 +282,7 @@ class Import
                 continue;
             }
 
-            $this->io->comment("Add user '" . $importUser->get('username'). "'.");
+            $this->io->comment("Add user '" . $importUser->get('username') . "'.");
 
             $user = new User();
 
