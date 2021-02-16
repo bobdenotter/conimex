@@ -9,5 +9,5 @@ namespace BobdenOtter\Conimex\OutputParser;
  */
 interface OutputParserInterface
 {
-    public function parse(array $output, ?string $filename = '');
+    public function parse(array $output);
 }

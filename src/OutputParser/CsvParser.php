@@ -9,7 +9,7 @@ use League\Csv\Writer;
 
 class CsvParser implements OutputParserInterface
 {
-    public function parse(array $output, ?string $locale = null): string
+    public function parse(array $output): string
     {
         $csv = Writer::createFromString('');
 

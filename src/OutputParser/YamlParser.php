@@ -8,7 +8,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class YamlParser implements OutputParserInterface
 {
-    public function parse(array $output, ?string $filename = ''): string
+    public function parse(array $output): string
     {
         return Yaml::dump($output, 4);
     }
