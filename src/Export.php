@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace BobdenOtter\Conimex;
 
-use BobdenOtter\Conimex\OutputParser\CsvParser;
 use BobdenOtter\Conimex\OutputParser\OutputParserFactory;
 use Bolt\Configuration\Config;
 use Bolt\Entity\Content;
+use Bolt\Entity\Relation;
 use Bolt\Entity\User;
 use Bolt\Repository\ContentRepository;
 use Bolt\Repository\RelationRepository;
-use Bolt\Entity\Relation;
-use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Export
 {
-    /** @var SymfonyStyle */
-    private $io;
-
     /** @var ContentRepository */
     private $contentRepository;
 
@@ -37,7 +30,6 @@ class Export
     private $relationRepository;
 
     public function __construct(EntityManagerInterface $em, Config $config,
-                                TaxonomyRepository $taxonomyRepository,
                                 \Bolt\Doctrine\Version $dbVersion,
                                 RelationRepository $relationRepository)
     {
@@ -49,12 +41,7 @@ class Export
         $this->dbVersion = $dbVersion;
     }
 
-    public function setIO(SymfonyStyle $io): void
-    {
-        $this->io = $io;
-    }
-
-    public function export(string $filename, ?string $contentType): void
+    public function export(?string $contentType, string $format = 'yaml')
     {
         $output = [];
 
@@ -63,15 +50,9 @@ class Export
         $output['content'] = $this->buildContent($contentType);
 
         // Create a parser based on the requested file extension.
-        $parser = OutputParserFactory::factory(pathinfo($filename, PATHINFO_EXTENSION));
+        $parser = OutputParserFactory::factory($format);
 
-        if ($parser instanceof CsvParser) {
-            $message = 'The CSV export support is experimental. You should only use it to export one ContentType at a time.';
-            $message .= ' Otherwise, the exported results may be inaccurate.';
-            $this->io->warning($message);
-        }
-
-        $parser->parse($output, $filename);
+        return $parser->parse($output);
     }
 
     private function buildMeta()
@@ -102,10 +83,6 @@ class Export
         $offset = 0;
         $limit = 100;
         $content = [];
-        $contentEntities = [];
-        $progressBar = new ProgressBar($this->io, count($contentEntities));
-        $progressBar->setBarWidth(50);
-        $progressBar->start();
 
         $criteria = [];
         if ($contentType) {
@@ -132,13 +109,9 @@ class Export
                 }
 
                 $content[] = $currentITem;
-                $progressBar->advance();
             }
             $offset++;
         } while ($contentEntities);
-
-        $progressBar->finish();
-        $this->io->newLine();
 
         return $content;
     }

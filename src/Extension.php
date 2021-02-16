@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace BobdenOtter\Conimex;
 
+use BobdenOtter\Conimex\Widget\ExportWidget;
 use Bolt\Extension\BaseExtension;
-use Symfony\Component\Routing\Route;
 
 class Extension extends BaseExtension
 {
@@ -15,5 +15,11 @@ class Extension extends BaseExtension
     public function getName(): string
     {
         return 'Conimex - Content Import & Export';
+    }
+
+    public function initialize(): void
+    {
+        $this->addTwigNamespace('conimex');
+        $this->addWidget(new ExportWidget());
     }
 }

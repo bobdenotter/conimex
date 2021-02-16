@@ -1,0 +1,12 @@
+{% set contentType = app.request.attributes.get('contentType') %}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-download"></i> &nbsp; {{ __('conimex.export_widget_card.title') }}
+    </div>
+    <div class="card-body">
+        <p>{{ 'conimex.export_widget_card.export_file_description'|trans({'contentType': contentType}) }}</p>
+        <a href="{{ path('conimex_export_contenttype', {'format' : 'csv', 'contentType': contentType}) }}" class="btn btn-tertiary">Export as CSV</a>
+        <a href="{{ path('conimex_export_contenttype', {'format' : 'yaml', 'contentType': contentType}) }}" class="btn btn-tertiary">Export as Yaml</a>
+    </div>
+</div>

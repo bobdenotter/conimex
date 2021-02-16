@@ -1,15 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BobdenOtter\Conimex\OutputParser;
 
 use Symfony\Component\Yaml\Yaml;
 
-class YamlParser extends AbstractParser implements OutputParserInterface
+class YamlParser implements OutputParserInterface
 {
-    public function parse(array $output, ?string $filename = ''): void
+    public function parse(array $output): string
     {
-        $yaml = Yaml::dump($output, 4);
-
-        $this->save($filename, $yaml);
+        return Yaml::dump($output, 4);
     }
 }
