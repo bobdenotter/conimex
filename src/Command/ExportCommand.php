@@ -8,6 +8,7 @@ use BobdenOtter\Conimex\Export;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -30,7 +31,7 @@ class ExportCommand extends Command
         $this
             ->setDescription('Export Content from Bolt to Yaml')
             ->addArgument('filename', InputArgument::REQUIRED, 'filename of the file to export')
-            ->addArgument('contenttype', InputArgument::OPTIONAL, 'ContentType to export');
+            ->addOption('contenttype', 'c', InputOption::VALUE_OPTIONAL, 'ContentType to export');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

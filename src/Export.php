@@ -95,7 +95,7 @@ class Export
             foreach ($contentEntities as $record) {
                 $currentITem = $record->toArray();
                 $currentITem['relations'] = [];
-                $relationsDefinition = $record->getDefinition()->get('relations');
+                $relationsDefinition = $record->getDefinition()->get('relations', []);
 
                 foreach ($relationsDefinition as $fieldName => $relationDefinition) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
