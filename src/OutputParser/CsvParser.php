@@ -24,6 +24,9 @@ class CsvParser implements OutputParserInterface
             }
         }
 
+        // TODO: Make the locale configurable
+        $locale = null;
+
         $rows = collect($output['content'])->map(function ($content) use ($headings, $locale) {
             $result = [];
 
