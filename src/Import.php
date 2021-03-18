@@ -142,21 +142,40 @@ class Import
         // Import Bolt 3 Fields and Taxonomies
         foreach ($record as $key => $item) {
             if ($content->hasFieldDefined($key)) {
+                $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
+
+                // Convert 'file' in incoming image or file to 'filename'
+                if (in_array($fieldDefinition['type'], ['image', 'file'], true)) {
+                    $item = (array) $item;
+                    $item['filename'] = ! empty($item['file']) ? $item['file'] : current($item);
+
+                    // If no filename is set, don't import a broken/missing image
+                    if (! $item['filename']) {
+                        continue;
+                    }
+                }
+
                 $content->setFieldValue($key, $item);
 
-                //import localize field if needed
-                $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
-                if (count($availableLocales) > 0 && $fieldDefinition['localize']) {
-                    foreach ($availableLocales as $locale) {
+                // Import localized field if needed, from BoltTranslate
+                if (count($contentType['locales']) > 0 && $fieldDefinition['localize']) {
+                    foreach ($contentType['locales'] as $locale) {
+                        // More recent BoltTranslate versions, in a field like `endata`.
                         if (isset($record[$locale . 'data']) && $record[$locale . 'data'] !== null) {
                             $localizeFields = json_decode($record[$locale . 'data'], true);
                             if (isset($localizeFields[$key])) {
                                 $content->setFieldValue($key, $localizeFields[$key], $locale);
                             }
                         }
+
+                        // Older BoltTranslate versions, in a field like `body_en`
+                        if (isset($record[$key . '_' . $locale])) {
+                            $content->setFieldValue($key, $record[$key . '_' . $locale], $locale);
+                        }
                     }
                 }
             }
+
             if ($content->hasTaxonomyDefined($key)) {
                 foreach ($item as $taxo) {
                     $configForTaxonomy = $this->config->getTaxonomy($key);
