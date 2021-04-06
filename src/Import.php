@@ -221,7 +221,7 @@ class Import
                         }
                     } else {
                         $field = $this->contentEditController->getFieldToUpdate($content, $key);
-                        `$this->contentEditController->updateField($field, $item, null);`
+                        $this->contentEditController->updateField($field, $item, null);
                     }
                 }
             }
