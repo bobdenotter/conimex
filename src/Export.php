@@ -97,7 +97,8 @@ class Export
                 $currentITem['relations'] = [];
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
-                foreach (keys($relationsDefinition) as $fieldName) {
+
+                foreach (array_keys((array) $relationsDefinition) as $fieldName) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
                     $relationsSlug = [];
 

@@ -50,7 +50,7 @@ class ExportCommand extends Command
 
         $type = pathinfo($filename, PATHINFO_EXTENSION);
 
-        $contentType = $input->getArgument('contenttype') ?? null;
+        $contentType = $input->getOption('contenttype') ?? null;
 
         $output = $this->export->export($contentType, $type);
 
