@@ -6,6 +6,7 @@ namespace BobdenOtter\Conimex;
 
 use Bolt\Configuration\Config;
 use Bolt\Configuration\Content\ContentType;
+use Bolt\Controller\Backend\ContentEditController;
 use Bolt\Entity\Content;
 use Bolt\Entity\Relation;
 use Bolt\Entity\Taxonomy;
@@ -43,7 +44,7 @@ class Import
     /** @var Config */
     private $config;
 
-    public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository, RelationRepository $relationRepository)
+    public function __construct(EntityManagerInterface $em, Config $config, TaxonomyRepository $taxonomyRepository, RelationRepository $relationRepository, ContentEditController $contentEditController)
     {
         $this->contentRepository = $em->getRepository(Content::class);
         $this->userRepository = $em->getRepository(User::class);
@@ -53,6 +54,7 @@ class Import
         $this->config = $config;
         $this->taxonomyRepository = $taxonomyRepository;
         $this->relationRepository = $relationRepository;
+        $this->contentEditController = $contentEditController;
     }
 
     public function setIO(SymfonyStyle $io): void
@@ -193,15 +195,38 @@ class Import
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-                if ($this->isLocalisedField($content, $key, $item)) {
-                    foreach ($item as $locale => $value) {
-                        $content->setFieldValue($key, $value, $locale);
+
+                // Handle collections
+                if ($content->getDefinition()->get('fields')[$key]['type'] === 'collection') {
+                    $data = [
+                        'collections'=> [
+                            $key => []
+                        ]
+                    ];
+
+                    $i = 1;
+                    foreach ($item as $fieldData) {
+                        $data['collections'][$key][$fieldData['name']][$i] = $fieldData['value'];
+                        $data['collections'][$key]['order'][] = $i;
+                        $i++;
                     }
+
+                    $this->contentEditController->updateCollections($content, $data, null);
                 } else {
-                    $content->setFieldValue($key, $item);
+
+                    // Handle all other fields
+                    if ($this->isLocalisedField($content, $key, $item)) {
+                        foreach ($item as $locale => $value) {
+                            $content->setFieldValue($key, $value, $locale);
+                        }
+                    } else {
+                        $field = $this->contentEditController->getFieldToUpdate($content, $key);
+                        $this->contentEditController->updateField($field, $item, null);
+                    }
                 }
             }
         }
+
 
         // Import Bolt 4 Taxonomies
         foreach ($record->get('taxonomies', []) as $key => $item) {
