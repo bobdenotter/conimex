@@ -46,7 +46,7 @@ class Export
         $output = [];
 
         $output['__bolt_export_meta'] = $this->buildMeta();
-        $output['__users'] = $this->buildUsers();
+//        $output['__users'] = $this->buildUsers();
         $output['content'] = $this->buildContent($contentType);
 
         // Create a parser based on the requested file extension.
@@ -94,6 +94,10 @@ class Export
             /** @var Content $record */
             foreach ($contentEntities as $record) {
                 $currentITem = $record->toArray();
+                $selectFields = $this->getSelectFields($record);
+
+                $currentITem = $this->updateSelectFields($currentITem, $selectFields);
+
                 $currentITem['relations'] = [];
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
@@ -115,5 +119,37 @@ class Export
         } while ($contentEntities);
 
         return $content;
+    }
+
+    private function getSelectFields(Content $record)
+    {
+        $selectFields = $record->getDefinition()
+            ->get('fields')
+            ->filter(function($definition, $name) {
+                if($definition['type'] == "select") {
+                    $values = $definition->get('values');
+
+                    if (is_string($values) && mb_strpos($values, '/') !== false) {
+                        return true;
+                    }
+                }
+            });
+
+        return $selectFields;
+    }
+
+    private function updateSelectFields (array $currentITem, $selectFields)
+    {
+        foreach ($selectFields as $selectFieldKey => $selectFieldValue)
+        {
+            $selectFieldData = [
+                "id" => $currentITem["fields"][$selectFieldKey],
+                "reference" => $currentITem["contentType"]. "/" . $currentITem["fields"][$selectFieldKey]
+            ];
+
+            $currentITem['fields'][$selectFieldKey] = $selectFieldData;
+        }
+
+        return $currentITem;
     }
 }
