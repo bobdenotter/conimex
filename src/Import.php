@@ -97,6 +97,7 @@ class Import
         $count = 0;
 
         foreach ($data as $record) {
+            dd($record);
             $record = new Collection($record);
 
             /** @var ContentType $contentType */
@@ -194,8 +195,12 @@ class Import
 
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
+//            dump($key);
+//            dump($content->getDefinition()->get('fields'));
             if ($content->hasFieldDefined($key)) {
-
+//                if ($content->getDefinition()->get('fields')[$key]['type'] === 'select'){
+//                    dd($key,$item);
+//                }
                 // Handle collections
                 if ($content->getDefinition()->get('fields')[$key]['type'] === 'collection') {
                     $data = [
@@ -221,6 +226,9 @@ class Import
                         }
                     } else {
                         $field = $this->contentEditController->getFieldToUpdate($content, $key);
+                        if($key == 'selectentry'){
+                            dd($field->getValue());
+                        }
                         $this->contentEditController->updateField($field, $item, null);
                     }
                 }
