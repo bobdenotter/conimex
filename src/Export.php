@@ -142,10 +142,9 @@ class Export
     {
         foreach ($selectFields as $selectFieldKey => $selectFieldValue)
         {
-            $selectFieldData = [
-                "id" => $currentITem["fields"][$selectFieldKey],
-                "reference" => $currentITem["contentType"]. "/" . $currentITem["fields"][$selectFieldKey]
-            ];
+            $selectFieldData = $currentITem["fields"][$selectFieldKey];
+            $selectFieldDataKeys = [ "id", "reference" ];
+            $selectFieldData = array_combine($selectFieldDataKeys, $selectFieldData);
 
             $currentITem['fields'][$selectFieldKey] = $selectFieldData;
         }
