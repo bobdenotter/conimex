@@ -171,19 +171,52 @@ class Export
 
     private function querySelectFieldReferencedData ($selectFieldDefinition, $selectFieldValue)
     {
-        // Query for the referenced entity to get the slug
-        $criteria['contentType'] =  explode('/', $selectFieldDefinition['values'])[0];
-        $criteria['id'] = $selectFieldValue;
-        $referenceRecord = $this->contentRepository->findBy($criteria, [], 1);
-        $referenceSlug = $referenceRecord[0]->getFieldValues()['slug'];
+        $data = [];
+        $selectFieldDefinitionValuesOption = $selectFieldDefinition->get('values');
+
+        // Check if the Select field is populated with Records from different ContentTypes.
+        // For example having a values definition like, (entries, news, articles)
+        preg_match('/(?<=\()(.*?)(?=\))\//', $selectFieldDefinitionValuesOption,$matches);
+        if(count($matches) > 0) {
+            $contentTypes = explode(',', str_replace(' ', '', array_shift($matches)));
+
+            // TODO: Build a more optimized query instead of looping over all ContenTypes querying per ContenType.
+            foreach ($contentTypes as $key => $contentType) {
+                $referencedRecordSlug = $this->fetchReferencedRecordSlug($contentType, $selectFieldValue);
+
+                if(isset($referencedRecordSlug)) {
+                    $data = [
+                        'id' => $selectFieldValue,
+                        'reference' => $contentType . '/' . $referencedRecordSlug
+                    ];
+                    break;
+                }
+            }
+            
+            return $data;
+        }
+
+        $referencedRecordSlug = $this->fetchReferencedRecordSlug(explode('/', $selectFieldDefinition['values'])[0], $selectFieldValue);
 
         // Set the data of the referenced entity to fetch it when running import
         $data = [
             'id' => $selectFieldValue,
             'reference' => explode('/', $selectFieldDefinition['values'])[0]
-                . '/' . $referenceSlug
+                . '/' . $referencedRecordSlug
         ];
 
         return $data;
+    }
+
+    private function fetchReferencedRecordSlug ($contentType, $selectFieldValue)
+    {
+        $criteria['contentType'] =  $contentType;
+        $criteria['id'] = $selectFieldValue;
+
+        $referencedRecord = $this->contentRepository->findBy($criteria, [], 1);
+
+        $referencedRecordSlug = $referencedRecord[0]->getFieldValues()['slug'];
+
+        return $referencedRecordSlug;
     }
 }
