@@ -194,8 +194,6 @@ class Import
 
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
-
-
             if ($content->hasFieldDefined($key)) {
                 // Handle collections
                 if ($content->getDefinition()->get('fields')[$key]['type'] === 'collection') {
