@@ -154,7 +154,7 @@ class Export
         $data = [];
 
         if (is_iterable($selectFieldData)) {
-            foreach ($selectFieldData as $selectFieldKey => $selectFieldValue) {
+            foreach ($selectFieldData as $selectFieldValue) {
                 $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue);
             }
         } else {
@@ -176,7 +176,7 @@ class Export
             $contentTypes = explode(',', str_replace(' ', '', array_shift($matches)));
 
             // TODO: Build a more optimized query instead of looping over all ContenTypes querying per ContenType.
-            foreach ($contentTypes as $key => $contentType) {
+            foreach ($contentTypes as $contentType) {
                 $referencedRecordSlug = $this->fetchReferencedRecordSlug($contentType, $selectFieldValue);
 
                 if (isset($referencedRecordSlug)) {
