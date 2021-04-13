@@ -143,48 +143,47 @@ class Export
     {
         foreach ($selectFields as $selectFieldDefinitionKey => $selectFieldDefinition)
         {
-            $data = [];
             $selectFieldData = $currentITem["fields"][$selectFieldDefinitionKey];
-
-            if (is_iterable($selectFieldData)) {
-                foreach ($selectFieldData as $selectFieldKey => $selectFieldValue){
-
-                    // Query for the referenced entity to get the slug
-                    $criteria['contentType'] =  explode('/', $selectFieldDefinition['values'])[0];
-                    $criteria['id'] = $selectFieldValue;
-                    $referenceRecord = $this->contentRepository->findBy($criteria, [], 1);
-                    $referenceSlug = $referenceRecord[0]->getFieldValues()['slug'];
-
-                    // Set the data of the referenced entity to fetch it when running import
-                    $data[] = [
-                        'id' => $selectFieldValue,
-                        'reference' => explode('/', $selectFieldDefinition['values'])[0]
-                            . '/' . $referenceSlug
-                    ];
-                }
-
-                // Update the reference of the imported select field value.
-                $currentITem['fields'][$selectFieldDefinitionKey] = $data;
-            } else {
-                // Query for the referenced entity to get the slug
-                $criteria['contentType'] =  explode('/', $selectFieldDefinition['values'])[0];
-                $criteria['id'] = $selectFieldData;
-                $referenceRecord = $this->contentRepository->findBy($criteria, [], 1);
-                $referenceSlug = $referenceRecord[0]->getFieldValues()['slug'];
-
-                // Set the data of the referenced entity to fetch it when running import
-                $data[] = [
-                    'id' => $selectFieldData,
-                    'reference' => explode('/', $selectFieldDefinition['values'])[0]
-                        . '/' . $referenceSlug
-                ];
-
-                // Update the reference of the imported select field value.
-                $currentITem['fields'][$selectFieldDefinitionKey] = $data;
-            }
+            $data = $this->populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition);
 
         }
 
+        // Update the reference of the imported select field value.
+        $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+
         return $currentITem;
+    }
+
+    private function populateSelectFieldReferencedData ($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition)
+    {
+        $data = [];
+
+        if (is_iterable($selectFieldData)) {
+            foreach ($selectFieldData as $selectFieldKey => $selectFieldValue){
+                $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue);
+            }
+        } else {
+            $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldData);
+        }
+
+        return $data;
+    }
+
+    private function querySelectFieldReferencedData ($selectFieldDefinition, $selectFieldValue)
+    {
+        // Query for the referenced entity to get the slug
+        $criteria['contentType'] =  explode('/', $selectFieldDefinition['values'])[0];
+        $criteria['id'] = $selectFieldValue;
+        $referenceRecord = $this->contentRepository->findBy($criteria, [], 1);
+        $referenceSlug = $referenceRecord[0]->getFieldValues()['slug'];
+
+        // Set the data of the referenced entity to fetch it when running import
+        $data = [
+            'id' => $selectFieldValue,
+            'reference' => explode('/', $selectFieldDefinition['values'])[0]
+                . '/' . $referenceSlug
+        ];
+
+        return $data;
     }
 }
