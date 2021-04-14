@@ -157,6 +157,47 @@ class Import
                     }
                 }
 
+                if (in_array($fieldDefinition['type'], ['collection'])) {
+                    // Here, we're importing a Bolt 3 block and repeater into a Bolt 4 collection of sets.
+
+                    $data = [
+                        'collections'=> [
+                            $key => []
+                        ]
+                    ];
+
+                    $i = 1;
+
+                    foreach ($item as $fieldData) {
+
+                        if (is_array(current(array_values($fieldData)))) {
+                            // We are importing a block
+                            foreach ($fieldData as $setName => $setValue) {
+                                $data['collections'][$key][$setName][$i] = $setValue;
+                                $data['collections'][$key]['order'][] = $i;
+                                $i++;
+
+                            }
+                        } else {
+                            // We are importing a repeater. It does not have a name.
+                            // The set name will be the old repeater's name minus the last character.
+
+                            $setName = mb_substr($key, 0, -1);
+                            $i++;
+
+                            foreach ($fieldData as $name => $value) {
+                                $data['collections'][$key][$setName][$i][$name] = $value;
+                                $data['collections'][$key]['order'][] = $i;
+                            }
+
+                        }
+                    }
+
+                    // Save it the way the contentEditController saves it.
+                    $this->contentEditController->updateCollections($content, $data, null);
+                    continue;
+                }
+
                 $content->setFieldValue($key, $item);
 
                 // Import localized field if needed, from BoltTranslate
