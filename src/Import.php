@@ -195,13 +195,12 @@ class Import
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-
                 // Handle collections
                 if ($content->getDefinition()->get('fields')[$key]['type'] === 'collection') {
                     $data = [
-                        'collections'=> [
-                            $key => []
-                        ]
+                        'collections' => [
+                            $key => [],
+                        ],
                     ];
 
                     $i = 1;
@@ -213,7 +212,6 @@ class Import
 
                     $this->contentEditController->updateCollections($content, $data, null);
                 } else {
-
                     // Handle all other fields
                     if ($this->isLocalisedField($content, $key, $item)) {
                         foreach ($item as $locale => $value) {
@@ -221,12 +219,34 @@ class Import
                         }
                     } else {
                         $field = $this->contentEditController->getFieldToUpdate($content, $key);
+
+                        // Handle select fields with referenced entities
+                        if ($content->getDefinition()->get('fields')[$key]['type'] === 'select') {
+                            $values = $content->getDefinition()->get('fields')[$key]->get('values');
+                            $result = [];
+
+                            // Check if this select field Definition has referenced entities
+                            if (is_string($values) && mb_strpos($values, '/') !== false) {
+                                if (is_iterable($item)) {
+                                    foreach ($item as $key => $itemValue) {
+                                        $contentType = $this->config->getContentType(explode('/', $itemValue['reference'])[0]);
+                                        $slug = explode('/', $itemValue['reference'])[1];
+                                        $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
+
+                                        if ($referencedEntity instanceof Content) {
+                                            $result[] = $referencedEntity->getId();
+                                        }
+                                    }
+                                }
+                            }
+
+                            $item = $result;
+                        }
                         $this->contentEditController->updateField($field, $item, null);
                     }
                 }
             }
         }
-
 
         // Import Bolt 4 Taxonomies
         foreach ($record->get('taxonomies', []) as $key => $item) {

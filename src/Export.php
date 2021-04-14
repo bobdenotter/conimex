@@ -93,10 +93,14 @@ class Export
             $contentEntities = $this->contentRepository->findBy($criteria, [], $limit, $limit * $offset);
             /** @var Content $record */
             foreach ($contentEntities as $record) {
-                $currentITem = $record->toArray();
-                $currentITem['relations'] = [];
-                $relationsDefinition = $record->getDefinition()->get('relations', []);
+                $currentItem = $record->toArray();
+                // Get the select fields that have an entity referenced
+                $selectFields = $this->getSelectFields($record);
+                // Update the $currentItem with the right data that will be needed to make the reference when importing
+                $currentItem = $this->updateSelectFields($currentItem, $selectFields);
 
+                $currentItem['relations'] = [];
+                $relationsDefinition = $record->getDefinition()->get('relations', []);
 
                 foreach (array_keys((array) $relationsDefinition) as $fieldName) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
@@ -106,14 +110,104 @@ class Export
                     foreach ($relations as $relation) {
                         $relationsSlug[] = $relation->getToContent()->getContentType() . '/' . $relation->getToContent()->getSlug();
                     }
-                    $currentITem['relations'][$fieldName] = $relationsSlug;
+                    $currentItem['relations'][$fieldName] = $relationsSlug;
                 }
 
-                $content[] = $currentITem;
+                $content[] = $currentItem;
             }
             $offset++;
         } while ($contentEntities);
 
         return $content;
+    }
+
+    private function getSelectFields(Content $record)
+    {
+        return $record->getDefinition()
+            ->get('fields')
+            ->filter(function ($definition, $name) {
+                if ($definition['type'] === 'select') {
+                    $values = $definition->get('values');
+
+                    if (is_string($values) && mb_strpos($values, '/') !== false) {
+                        return true;
+                    }
+                }
+            });
+    }
+
+    private function updateSelectFields(array $currentITem, $selectFields)
+    {
+        foreach ($selectFields as $selectFieldDefinitionKey => $selectFieldDefinition) {
+            $selectFieldData = $currentITem['fields'][$selectFieldDefinitionKey];
+            $data = $this->populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition);
+        }
+
+        // Update the reference of the imported select field value.
+        $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+
+        return $currentITem;
+    }
+
+    private function populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition)
+    {
+        $data = [];
+
+        if (is_iterable($selectFieldData)) {
+            foreach ($selectFieldData as $selectFieldValue) {
+                $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue);
+            }
+        } else {
+            $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldData);
+        }
+
+        return $data;
+    }
+
+    private function querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue)
+    {
+        $data = [];
+        $selectFieldDefinitionValuesOption = $selectFieldDefinition->get('values');
+
+        // Check if the Select field is populated with Records from different ContentTypes.
+        // For example having a values definition like, (entries, news, articles)
+        preg_match('/(?<=\()(.*?)(?=\))\//', $selectFieldDefinitionValuesOption, $matches);
+        if (count($matches) > 0) {
+            $contentTypes = explode(',', str_replace(' ', '', array_shift($matches)));
+
+            // TODO: Build a more optimized query instead of looping over all ContenTypes querying per ContenType.
+            foreach ($contentTypes as $contentType) {
+                $referencedRecordSlug = $this->fetchReferencedRecordSlug($contentType, $selectFieldValue);
+
+                if (isset($referencedRecordSlug)) {
+                    $data = [
+                        'id' => $selectFieldValue,
+                        'reference' => $contentType . '/' . $referencedRecordSlug,
+                    ];
+                    break;
+                }
+            }
+
+            return $data;
+        }
+
+        $referencedRecordSlug = $this->fetchReferencedRecordSlug(explode('/', $selectFieldDefinition['values'])[0], $selectFieldValue);
+
+        // Set the data of the referenced entity to fetch it when running import
+        return [
+            'id' => $selectFieldValue,
+            'reference' => explode('/', $selectFieldDefinition['values'])[0]
+                . '/' . $referencedRecordSlug,
+        ];
+    }
+
+    private function fetchReferencedRecordSlug($contentType, $selectFieldValue)
+    {
+        $criteria['contentType'] = $contentType;
+        $criteria['id'] = $selectFieldValue;
+
+        $referencedRecord = $this->contentRepository->findBy($criteria, [], 1);
+
+        return $referencedRecord[0]->getFieldValues()['slug'];
     }
 }
