@@ -93,13 +93,13 @@ class Export
             $contentEntities = $this->contentRepository->findBy($criteria, [], $limit, $limit * $offset);
             /** @var Content $record */
             foreach ($contentEntities as $record) {
-                $currentITem = $record->toArray();
+                $currentItem = $record->toArray();
                 // Get the select fields that have an entity referenced
                 $selectFields = $this->getSelectFields($record);
                 // Update the $currentItem with the right data that will be needed to make the reference when importing
-                $currentITem = $this->updateSelectFields($currentITem, $selectFields);
+                $currentItem = $this->updateSelectFields($currentItem, $selectFields);
 
-                $currentITem['relations'] = [];
+                $currentItem['relations'] = [];
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
                 foreach (array_keys((array) $relationsDefinition) as $fieldName) {
@@ -110,10 +110,10 @@ class Export
                     foreach ($relations as $relation) {
                         $relationsSlug[] = $relation->getToContent()->getContentType() . '/' . $relation->getToContent()->getSlug();
                     }
-                    $currentITem['relations'][$fieldName] = $relationsSlug;
+                    $currentItem['relations'][$fieldName] = $relationsSlug;
                 }
 
-                $content[] = $currentITem;
+                $content[] = $currentItem;
             }
             $offset++;
         } while ($contentEntities);
