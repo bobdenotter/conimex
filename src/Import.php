@@ -198,6 +198,32 @@ class Import
                     continue;
                 }
 
+                // Handle select fields with referenced entities
+                if ($fieldDefinition['type'] === 'select') {
+                    $values = $content->getDefinition()->get('fields')[$key]->get('values');
+                    $result = [];
+                    // Check if this select field Definition has referenced entities
+                    if (is_string($values) && mb_strpos($values, '/') !== false) {
+                        if (is_iterable($item)) {
+                            foreach ($item as $itemValueKey => $itemValue) {
+                                // No references are exported as null, make sure to avoid importing those
+                                if(isset($item[$itemValueKey]['value'])){
+                                    $contentType = $this->config->getContentType(explode('/', $itemValue['_id'])[0]);
+                                    $slug = explode('/', $itemValue['_id'])[1];
+                                    $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
+                                    if ($referencedEntity instanceof Content) {
+                                        $result[] = $referencedEntity->getId();
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                    $item = $result;
+                    $field = $this->contentEditController->getFieldToUpdate($content, $key);
+                    $this->contentEditController->updateField($field, $item, null);
+                }
+
                 $content->setFieldValue($key, $item);
 
                 // Import localized field if needed, from BoltTranslate
