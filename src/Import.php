@@ -157,26 +157,24 @@ class Import
                     }
                 }
 
-                if (in_array($fieldDefinition['type'], ['collection'])) {
+                if (in_array($fieldDefinition['type'], ['collection'], true)) {
                     // Here, we're importing a Bolt 3 block and repeater into a Bolt 4 collection of sets.
 
                     $data = [
-                        'collections'=> [
-                            $key => []
-                        ]
+                        'collections' => [
+                            $key => [],
+                        ],
                     ];
 
                     $i = 1;
 
                     foreach ($item as $fieldData) {
-
                         if (is_array(current(array_values($fieldData)))) {
                             // We are importing a block
                             foreach ($fieldData as $setName => $setValue) {
                                 $data['collections'][$key][$setName][$i] = $setValue;
                                 $data['collections'][$key]['order'][] = $i;
                                 $i++;
-
                             }
                         } else {
                             // We are importing a repeater. It does not have a name.
@@ -189,13 +187,37 @@ class Import
                                 $data['collections'][$key][$setName][$i][$name] = $value;
                                 $data['collections'][$key]['order'][] = $i;
                             }
-
                         }
                     }
 
                     // Save it the way the contentEditController saves it.
                     $this->contentEditController->updateCollections($content, $data, null);
                     continue;
+                }
+
+                // Handle select fields with referenced entities
+                if ($fieldDefinition['type'] === 'select') {
+                    $values = $content->getDefinition()->get('fields')[$key]->get('values');
+                    $result = [];
+                    // Check if this select field Definition has referenced entities
+                    if (is_string($values) && mb_strpos($values, '/') !== false) {
+                        if (is_iterable($item)) {
+                            foreach ($item as $itemValueKey => $itemValue) {
+                                // No references are exported as null, make sure to avoid importing those
+                                if (isset($item[$itemValueKey]['value'])) {
+                                    $contentType = $this->config->getContentType(explode('/', $itemValue['_id'])[0]);
+                                    $slug = explode('/', $itemValue['_id'])[1];
+                                    $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
+                                    if ($referencedEntity instanceof Content) {
+                                        $result[] = $referencedEntity->getId();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $item = $result;
+                    $field = $this->contentEditController->getFieldToUpdate($content, $key);
+                    $this->contentEditController->updateField($field, $item, null);
                 }
 
                 $content->setFieldValue($key, $item);
