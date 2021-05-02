@@ -168,6 +168,11 @@ class Import
 
                     $i = 1;
 
+                    if (empty($item)) {
+                        //Do not try to save a collection which has no items.
+                        continue;
+                    }
+
                     foreach ($item as $fieldData) {
                         if (is_array(current(array_values($fieldData)))) {
                             // We are importing a block
@@ -176,16 +181,16 @@ class Import
                                 $data['collections'][$key]['order'][] = $i;
                                 $i++;
                             }
-                        } else {
+                        } elseif (is_array($fieldData)) {
                             // We are importing a repeater. It does not have a name.
                             // The set name will be the old repeater's name minus the last character.
 
                             $setName = mb_substr($key, 0, -1);
                             $i++;
+                            $data['collections'][$key]['order'][] = $i;
 
                             foreach ($fieldData as $name => $value) {
                                 $data['collections'][$key][$setName][$i][$name] = $value;
-                                $data['collections'][$key]['order'][] = $i;
                             }
                         }
                     }
