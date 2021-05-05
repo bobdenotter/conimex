@@ -261,7 +261,7 @@ class Import
         // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
         // Save it the way the contentEditController saves it.
         $this->contentEditController->updateCollections($content, $this->data, null);
-
+        $this->data = []; // unset it for the next time it's needed.
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
