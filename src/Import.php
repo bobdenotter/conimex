@@ -55,6 +55,12 @@ class Import
         $this->taxonomyRepository = $taxonomyRepository;
         $this->relationRepository = $relationRepository;
         $this->contentEditController = $contentEditController;
+
+        // Data for updating collections
+        $this->data = [
+            'collections' => [
+            ],
+        ];
     }
 
     public function setIO(SymfonyStyle $io): void
@@ -160,16 +166,10 @@ class Import
                 if (in_array($fieldDefinition['type'], ['collection'], true)) {
                     // Here, we're importing a Bolt 3 block and repeater into a Bolt 4 collection of sets.
 
-                    $data = [
-                        'collections' => [
-                            $key => [],
-                        ],
-                    ];
-
                     $i = 1;
 
                     if (empty($item)) {
-                        //Do not try to save a collection which has no items.
+                        // Do not import an empty field.
                         continue;
                     }
 
@@ -177,26 +177,24 @@ class Import
                         if (is_array(current(array_values($fieldData)))) {
                             // We are importing a block
                             foreach ($fieldData as $setName => $setValue) {
-                                $data['collections'][$key][$setName][$i] = $setValue;
-                                $data['collections'][$key]['order'][] = $i;
+                                $this->data['collections'][$key][$setName][$i] = $setValue;
+                                $this->data['collections'][$key]['order'][] = $i;
                                 $i++;
                             }
-                        } elseif (is_array($fieldData)) {
+                        } else {
                             // We are importing a repeater. It does not have a name.
                             // The set name will be the old repeater's name minus the last character.
 
                             $setName = mb_substr($key, 0, -1);
                             $i++;
-                            $data['collections'][$key]['order'][] = $i;
 
                             foreach ($fieldData as $name => $value) {
-                                $data['collections'][$key][$setName][$i][$name] = $value;
+                                $this->data['collections'][$key][$setName][$i][$name] = $value;
+                                $this->data['collections'][$key]['order'][] = $i;
                             }
                         }
                     }
 
-                    // Save it the way the contentEditController saves it.
-                    $this->contentEditController->updateCollections($content, $data, null);
                     continue;
                 }
 
@@ -259,6 +257,10 @@ class Import
                 }
             }
         }
+
+        // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
+        // Save it the way the contentEditController saves it.
+        $this->contentEditController->updateCollections($content, $this->data, null);
 
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
