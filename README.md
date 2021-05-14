@@ -21,13 +21,13 @@ bin/console conimex:export websitename.yaml
 To export a single Content Type, for example `pages`, use:
 
 ```bash
-bin/console conimex:export websitename.yaml --contenttype=pages
+bin/console conimex:export websitename.yaml [pages]
 ```
 
 To export a single Content Type as a CSV, use:
 
 ```bash
-bin/console conimex:export websitename.csv --contenttype=pages
+bin/console conimex:export websitename.csv [pages]
 ```
 
 Importing: 
