@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace BobdenOtter\Conimex;
 
-use BobdenOtter\Conimex\OutputParser\CsvParser;
 use BobdenOtter\Conimex\OutputParser\OutputParserFactory;
 use Bolt\Configuration\Config;
 use Bolt\Entity\Content;
+use Bolt\Entity\Relation;
 use Bolt\Entity\User;
 use Bolt\Repository\ContentRepository;
 use Bolt\Repository\RelationRepository;
-use Bolt\Entity\Relation;
-use Bolt\Repository\TaxonomyRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 class Export
 {
-    /** @var SymfonyStyle */
-    private $io;
-
     /** @var ContentRepository */
     private $contentRepository;
 
@@ -37,7 +30,6 @@ class Export
     private $relationRepository;
 
     public function __construct(EntityManagerInterface $em, Config $config,
-                                TaxonomyRepository $taxonomyRepository,
                                 \Bolt\Doctrine\Version $dbVersion,
                                 RelationRepository $relationRepository)
     {
@@ -49,12 +41,7 @@ class Export
         $this->dbVersion = $dbVersion;
     }
 
-    public function setIO(SymfonyStyle $io): void
-    {
-        $this->io = $io;
-    }
-
-    public function export(string $filename, ?string $contentType): void
+    public function export(?string $contentType, string $format = 'yaml')
     {
         $output = [];
 
@@ -63,15 +50,9 @@ class Export
         $output['content'] = $this->buildContent($contentType);
 
         // Create a parser based on the requested file extension.
-        $parser = OutputParserFactory::factory(pathinfo($filename, PATHINFO_EXTENSION));
+        $parser = OutputParserFactory::factory($format);
 
-        if ($parser instanceof CsvParser) {
-            $message = 'The CSV export support is experimental. You should only use it to export one ContentType at a time.';
-            $message .= ' Otherwise, the exported results may be inaccurate.';
-            $this->io->warning($message);
-        }
-
-        $parser->parse($output, $filename);
+        return $parser->parse($output);
     }
 
     private function buildMeta()
@@ -102,10 +83,6 @@ class Export
         $offset = 0;
         $limit = 100;
         $content = [];
-        $contentEntities = [];
-        $progressBar = new ProgressBar($this->io, count($contentEntities));
-        $progressBar->setBarWidth(50);
-        $progressBar->start();
 
         $criteria = [];
         if ($contentType) {
@@ -116,11 +93,16 @@ class Export
             $contentEntities = $this->contentRepository->findBy($criteria, [], $limit, $limit * $offset);
             /** @var Content $record */
             foreach ($contentEntities as $record) {
-                $currentITem = $record->toArray();
-                $currentITem['relations'] = [];
-                $relationsDefinition = $record->getDefinition()->get('relations');
+                $currentItem = $record->toArray();
+                // Get the select fields that have an entity referenced
+                $selectFields = $this->getSelectFields($record);
+                // Update the $currentItem with the right data that will be needed to make the reference when importing
+                $currentItem = $this->updateSelectFields($currentItem, $selectFields);
 
-                foreach ($relationsDefinition as $fieldName => $relationDefinition) {
+                $currentItem['relations'] = [];
+                $relationsDefinition = $record->getDefinition()->get('relations', []);
+
+                foreach (array_keys((array) $relationsDefinition) as $fieldName) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
                     $relationsSlug = [];
 
@@ -128,18 +110,104 @@ class Export
                     foreach ($relations as $relation) {
                         $relationsSlug[] = $relation->getToContent()->getContentType() . '/' . $relation->getToContent()->getSlug();
                     }
-                    $currentITem['relations'][$fieldName] = $relationsSlug;
+                    $currentItem['relations'][$fieldName] = $relationsSlug;
                 }
 
-                $content[] = $currentITem;
-                $progressBar->advance();
+                $content[] = $currentItem;
             }
             $offset++;
         } while ($contentEntities);
 
-        $progressBar->finish();
-        $this->io->newLine();
-
         return $content;
+    }
+
+    private function getSelectFields(Content $record)
+    {
+        return $record->getDefinition()
+            ->get('fields')
+            ->filter(function ($definition, $name) {
+                if ($definition['type'] === 'select') {
+                    $values = $definition->get('values');
+
+                    if (is_string($values) && mb_strpos($values, '/') !== false) {
+                        return true;
+                    }
+                }
+            });
+    }
+
+    private function updateSelectFields(array $currentITem, $selectFields)
+    {
+        foreach ($selectFields as $selectFieldDefinitionKey => $selectFieldDefinition) {
+            $selectFieldData = $currentITem['fields'][$selectFieldDefinitionKey];
+            $data = $this->populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition);
+        }
+
+        // Update the reference of the imported select field value.
+        $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+
+        return $currentITem;
+    }
+
+    private function populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition)
+    {
+        $data = [];
+
+        if (is_iterable($selectFieldData)) {
+            foreach ($selectFieldData as $selectFieldValue) {
+                $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue);
+            }
+        } else {
+            $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldData);
+        }
+
+        return $data;
+    }
+
+    private function querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue)
+    {
+        $data = [];
+        $selectFieldDefinitionValuesOption = $selectFieldDefinition->get('values');
+
+        // Check if the Select field is populated with Records from different ContentTypes.
+        // For example having a values definition like, (entries, news, articles)
+        preg_match('/(?<=\()(.*?)(?=\))\//', $selectFieldDefinitionValuesOption, $matches);
+        if (count($matches) > 0) {
+            $contentTypes = explode(',', str_replace(' ', '', array_shift($matches)));
+
+            // TODO: Build a more optimized query instead of looping over all ContenTypes querying per ContenType.
+            foreach ($contentTypes as $contentType) {
+                $referencedRecordSlug = $this->fetchReferencedRecordSlug($contentType, $selectFieldValue);
+
+                if (isset($referencedRecordSlug)) {
+                    $data = [
+                        'id' => $selectFieldValue,
+                        'reference' => $contentType . '/' . $referencedRecordSlug,
+                    ];
+                    break;
+                }
+            }
+
+            return $data;
+        }
+
+        $referencedRecordSlug = $this->fetchReferencedRecordSlug(explode('/', $selectFieldDefinition['values'])[0], $selectFieldValue);
+
+        // Set the data of the referenced entity to fetch it when running import
+        return [
+            'id' => $selectFieldValue,
+            'reference' => explode('/', $selectFieldDefinition['values'])[0]
+                . '/' . $referencedRecordSlug,
+        ];
+    }
+
+    private function fetchReferencedRecordSlug($contentType, $selectFieldValue)
+    {
+        $criteria['contentType'] = $contentType;
+        $criteria['id'] = $selectFieldValue;
+
+        $referencedRecord = $this->contentRepository->findBy($criteria, [], 1);
+
+        return $referencedRecord[0]->getFieldValues()['slug'];
     }
 }

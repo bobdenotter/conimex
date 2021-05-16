@@ -1,0 +1,14 @@
+## Add the required services for this extension to work.
+services:
+
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  BobdenOtter\Conimex\Controller\FileDownloadController:
+    tags: ['controller.service_arguments']
+
+## Add the translatable labels for this extension.
+framework:
+  translator:
+    paths: ['%kernel.project_dir%/vendor/bobdenotter/conimex/translations']

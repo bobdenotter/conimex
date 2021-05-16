@@ -15,8 +15,8 @@
         "league/csv": "^9.6"
     },
     "require-dev": {
-        "bolt/core": "^4.0.0",
-        "symplify/easy-coding-standard": "^6.0"
+        "bolt/core": "^5.0.0",
+        "symplify/easy-coding-standard": "^8.0"
     },
     "autoload": {
         "psr-4": {

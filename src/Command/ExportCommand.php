@@ -38,8 +38,6 @@ class ExportCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $this->export->setIO($io);
-
         $filename = $input->getArgument('filename');
 
         if ($filename) {
@@ -50,12 +48,23 @@ class ExportCommand extends Command
             $filename = getcwd() . '/' . $filename;
         }
 
-        $contentType = $input->getOption('contenttype');
+        $type = pathinfo($filename, PATHINFO_EXTENSION);
 
-        $this->export->export($filename, $contentType);
+        $contentType = $input->getOption('contenttype') ?? null;
+
+        $output = $this->export->export($contentType, $type);
+
+        $this->save($filename, $output);
 
         $io->success('Done.');
 
         return 1;
+    }
+
+    private function save(?string $filename, $output): void
+    {
+        if ($filename) {
+            file_put_contents($filename, $output);
+        }
     }
 }
