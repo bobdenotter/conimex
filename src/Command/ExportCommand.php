@@ -31,7 +31,7 @@ class ExportCommand extends Command
         $this
             ->setDescription('Export Content from Bolt to Yaml')
             ->addArgument('filename', InputArgument::REQUIRED, 'filename of the file to export')
-            ->addArgument('contenttype', InputArgument::OPTIONAL, 'ContentType to export');
+            ->addOption('contenttype', 'c', InputOption::VALUE_OPTIONAL, 'ContentType to export');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,7 +50,7 @@ class ExportCommand extends Command
             $filename = getcwd() . '/' . $filename;
         }
 
-        $contentType = $input->getArgument('contenttype');
+        $contentType = $input->getOption('contenttype');
 
         $this->export->export($filename, $contentType);
 
