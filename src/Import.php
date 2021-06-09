@@ -216,9 +216,10 @@ class Import
                                     }
                                 }
                             }
+                            $item = $result;
                         }
                     }
-                    $item = $result;
+                    
                     $field = $this->contentEditController->getFieldToUpdate($content, $key);
                     $this->contentEditController->updateField($field, $item, null);
                 }
