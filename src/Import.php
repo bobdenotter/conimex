@@ -261,7 +261,14 @@ class Import
 
         // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
         // Save it the way the contentEditController saves it.
-        $this->contentEditController->updateCollections($content, $this->data, null);
+
+        // We use this hackish hack to call a private method on ContentEditController
+        $method = new \ReflectionMethod(ContentEditController::class, "updateCollections");
+        $method->setAccessible(true);
+        $method->invokeArgs($this->contentEditController, [$content, $this->data, null]);
+        // $this->contentEditController->updateCollections($content, $data, null);
+
+
         $this->data = []; // unset it for the next time it's needed.
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
@@ -281,7 +288,11 @@ class Import
                         $i++;
                     }
 
-                    $this->contentEditController->updateCollections($content, $data, null);
+                    // We use this hackish hack to call a private method on ContentEditController
+                    $method = new \ReflectionMethod(ContentEditController::class, "updateCollections");
+                    $method->setAccessible(true);
+                    $method->invokeArgs($this->contentEditController, [$content, $this->data, null]);
+                    // $this->contentEditController->updateCollections($content, $data, null);
                 } else {
                     // Handle all other fields
                     if ($this->isLocalisedField($content, $key, $item)) {
@@ -289,7 +300,10 @@ class Import
                             $content->setFieldValue($key, $value, $locale);
                         }
                     } else {
-                        $field = $this->contentEditController->getFieldToUpdate($content, $key);
+                        // We use this hackish hack to call a private method on ContentEditController
+                        $method = new \ReflectionMethod(ContentEditController::class, "getFieldToUpdate");
+                        $method->setAccessible(true);
+                        $field = $method->invokeArgs($this->contentEditController, [$content, $key]);
 
                         // Handle select fields with referenced entities
                         if ($content->getDefinition()->get('fields')[$key]['type'] === 'select') {
@@ -313,7 +327,12 @@ class Import
 
                             $item = $result;
                         }
-                        $this->contentEditController->updateField($field, $item, null);
+                        // We use this hackish hack to call a private method on ContentEditController
+                        $method = new \ReflectionMethod(ContentEditController::class, "updateField");
+                        $method->setAccessible(true);
+                        $field = $method->invokeArgs($this->contentEditController, [$field, $item, null]);
+
+                        // $this->contentEditController->updateField($field, $item, null);
                     }
                 }
             }
