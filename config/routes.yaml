@@ -1,0 +1,6 @@
+# Routes added by the conimex extension
+
+conimex_extension_controllers:
+  resource: '../../vendor/bobdenotter/conimex/src/Controller/'
+  prefix: '%bolt.backend_url%/conimex'
+  type: annotation
