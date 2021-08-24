@@ -141,10 +141,10 @@ class Export
         foreach ($selectFields as $selectFieldDefinitionKey => $selectFieldDefinition) {
             $selectFieldData = $currentITem['fields'][$selectFieldDefinitionKey];
             $data = $this->populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition);
-        }
 
-        // Update the reference of the imported select field value.
-        $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+            // Update the reference of the imported select field value.
+            $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+        }
 
         return $currentITem;
     }
