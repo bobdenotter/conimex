@@ -136,17 +136,17 @@ class Export
             });
     }
 
-    private function updateSelectFields(array $currentITem, $selectFields)
+    private function updateSelectFields(array $currentItem, $selectFields)
     {
         foreach ($selectFields as $selectFieldDefinitionKey => $selectFieldDefinition) {
-            $selectFieldData = $currentITem['fields'][$selectFieldDefinitionKey];
+            $selectFieldData = $currentItem['fields'][$selectFieldDefinitionKey];
             $data = $this->populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition);
 
             // Update the reference of the imported select field value.
-            $currentITem['fields'][$selectFieldDefinitionKey] = $data;
+            $currentItem['fields'][$selectFieldDefinitionKey] = $data;
         }
 
-        return $currentITem;
+        return $currentItem;
     }
 
     private function populateSelectFieldReferencedData($selectFieldData, $selectFieldDefinitionKey, $selectFieldDefinition)
