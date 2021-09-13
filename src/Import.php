@@ -250,7 +250,7 @@ class Import
                     $configForTaxonomy = $this->config->getTaxonomy($key);
                     if ($taxo['slug'] &&
                         $configForTaxonomy !== null &&
-                        $configForTaxonomy['options']->get($taxo['slug']) !== null) {
+                        $configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] == 'tags') {
                         $content->addTaxonomy($this->taxonomyRepository->factory($key,
                             $taxo['slug'],
                             $configForTaxonomy['options']->get($taxo['slug'])));
