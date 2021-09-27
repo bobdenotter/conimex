@@ -345,7 +345,7 @@ class Import
         foreach ($content->getDefinition()->get('relations') as $key => $relation) {
             if (isset($record[$key])) {
                 // Remove old ones
-                $currentRelations = $this->relationRepository->findRelations($content, null, true, null, false);
+                $currentRelations = $this->relationRepository->findRelations($content, null, null, false);
                 foreach ($currentRelations as $currentRelation) {
                     $this->em->remove($currentRelation);
                 }
