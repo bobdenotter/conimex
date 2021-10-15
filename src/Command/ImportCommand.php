@@ -49,6 +49,12 @@ class ImportCommand extends Command
             $filename = getcwd() . '/' . $filename;
         }
 
+        if (! realpath($filename)) {
+            echo "Couldn't read file '" . $filename . "'. \nMake sure it's readable, and you've given the correct filename.\n\n";
+
+            return Command::FAILURE;
+        }
+
         $yaml = Yaml::parseFile(realpath($filename));
 
         dump($yaml['__bolt_export_meta']);
@@ -57,6 +63,6 @@ class ImportCommand extends Command
 
         $io->success('Done.');
 
-        return 1;
+        return Command::SUCCESS;
     }
 }
