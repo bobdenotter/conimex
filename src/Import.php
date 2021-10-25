@@ -213,10 +213,10 @@ class Import
                             foreach ($item as $itemValueKey => $itemValue) {
                                 // No references are exported as null, make sure to avoid importing those
                                 if (isset($item[$itemValueKey]['value'])) {
-                                    $result[] = $this->getValues($itemValue['_id'], $contentType);
+                                    $result[] = $this->getValues($itemValue['_id']);
                                 } else {
                                     if (is_array($item[$itemValueKey])) {
-                                        $result = array_merge($this->getMultipleValues($itemValue, $contentType), $result);
+                                        $result = array_merge($this->getMultipleValues($itemValue), $result);
                                     }
                                 }
                             }
@@ -447,7 +447,7 @@ class Import
         }
     }
 
-    private function getValues($id, ?Collection $contentType)
+    private function getValues(string $id)
     {
         $contentType = $this->config->getContentType(explode('/', $id)[0]);
         $slug = explode('/', $id)[1];
@@ -457,11 +457,11 @@ class Import
         }
     }
 
-    private function getMultipleValues($item, ContentType $contentType): array
+    private function getMultipleValues(array $item): array
     {
         $result = [];
         foreach ($item as $itemValue) {
-            $result[] = $this->getValues($itemValue['_id'], $contentType);
+            $result[] = $this->getValues($itemValue['_id']);
         }
 
         return $result;
