@@ -20,6 +20,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tightenco\Collect\Support\Collection;
+use function array_merge;
+use function explode;
+use function is_array;
+use function is_iterable;
+use function is_string;
 
 class Import
 {
@@ -208,11 +213,10 @@ class Import
                             foreach ($item as $itemValueKey => $itemValue) {
                                 // No references are exported as null, make sure to avoid importing those
                                 if (isset($item[$itemValueKey]['value'])) {
-                                    $contentType = $this->config->getContentType(explode('/', $itemValue['_id'])[0]);
-                                    $slug = explode('/', $itemValue['_id'])[1];
-                                    $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
-                                    if ($referencedEntity instanceof Content) {
-                                        $result[] = $referencedEntity->getId();
+                                    $result[] = $this->getValues($itemValue['_id']);
+                                } else {
+                                    if (is_array($item[$itemValueKey])) {
+                                        $result = array_merge($this->getMultipleValues($itemValue), $result);
                                     }
                                 }
                             }
@@ -448,5 +452,25 @@ class Import
 
             $this->em->flush();
         }
+    }
+
+    private function getValues(string $id)
+    {
+        $contentType = $this->config->getContentType(explode('/', $id)[0]);
+        $slug = explode('/', $id)[1];
+        $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
+        if ($referencedEntity instanceof Content) {
+            return $referencedEntity->getId();
+        }
+    }
+
+    private function getMultipleValues(array $item): array
+    {
+        $result = [];
+        foreach ($item as $itemValue) {
+            $result[] = $this->getValues($itemValue['_id']);
+        }
+
+        return $result;
     }
 }
