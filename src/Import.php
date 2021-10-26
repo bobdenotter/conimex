@@ -219,7 +219,7 @@ class Import
                             $item = $result;
                         }
                     }
-                    
+
                     $field = $this->contentEditController->getFieldToUpdate($content, $key);
                     $this->contentEditController->updateField($field, $item, null);
                 }
@@ -248,9 +248,16 @@ class Import
             if ($content->hasTaxonomyDefined($key)) {
                 foreach ($item as $taxo) {
                     $configForTaxonomy = $this->config->getTaxonomy($key);
-                    if ($taxo['slug'] &&
-                        $configForTaxonomy !== null &&
-                        $configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] == 'tags') {
+
+                    if (! $taxo['slug']) {
+                        continue;
+                    }
+
+                    if (! is_array($configForTaxonomy)) {
+                        continue;
+                    }
+                    
+                    if ($configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] == 'tags') {
                         $content->addTaxonomy($this->taxonomyRepository->factory($key,
                             $taxo['slug'],
                             $configForTaxonomy['options']->get($taxo['slug'])));
