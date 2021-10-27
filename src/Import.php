@@ -148,12 +148,12 @@ class Import
 
         if (! $content) {
             $content = new Content($contentType);
-            $content->setStatus('published');
             $content->setAuthor($user);
         }
 
         // Import Bolt 3 Fields and Taxonomies
         foreach ($record as $key => $item) {
+            $content->setStatus($record->get('status', 'published'));
             if ($content->hasFieldDefined($key)) {
                 $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
 
@@ -260,7 +260,7 @@ class Import
                     if (! is_array($configForTaxonomy)) {
                         continue;
                     }
-                    
+
                     if ($configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] == 'tags') {
                         $content->addTaxonomy($this->taxonomyRepository->factory($key,
                             $taxo['slug'],
