@@ -168,6 +168,41 @@ class Import
                     }
                 }
 
+                // Handle geolocation import
+                if ($fieldDefinition['type'] == "geolocation") {
+                    // Replace the old key names for the new Geolocation field key names
+                    $keyReplacements = [
+                        'formatted_address' => 'search',
+                        'latitude' => 'lat',
+                        'longitude' => 'long',
+                    ];
+
+                    foreach ($item as $geoKey => $value) {
+                        if(array_key_exists($geoKey, $keyReplacements)) {
+                            $item[$keyReplacements[$geoKey]] = $item[$geoKey];
+                            unset($item[$geoKey]);
+                        } else {
+                            // Do not use data that is not compatible with the new Geolocation field
+                            unset($item[$geoKey]);
+                        }
+                    }
+
+                    if (isset($item['lat']) && isset($item['long']) ) {
+                        $item['selected'] = 'search';
+                        $item['zoom'] = "13";
+                    } else {
+                        // Reset data and default it to empty values
+                        unset($item);
+                        $item['search'] = "";
+                        $item['selected'] = "";
+                        $item['zoom'] = "";
+                        $item['lat'] = "";
+                        $item['long'] = "";
+                    }
+
+                    $item = json_encode($item);
+                }
+
                 if (in_array($fieldDefinition['type'], ['collection'], true)) {
                     // Here, we're importing a Bolt 3 block and repeater into a Bolt 4 collection of sets.
 
