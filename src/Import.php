@@ -257,7 +257,7 @@ class Import
                         continue;
                     }
 
-                    if (! is_array($configForTaxonomy)) {
+                    if (! is_object($configForTaxonomy)) {
                         continue;
                     }
 
