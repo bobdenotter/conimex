@@ -345,6 +345,8 @@ class Import
         $content->setPublishedAt(new Carbon($record->get('publishedAt', $record->get('datepublish'))));
         $content->setModifiedAt(new Carbon($record->get('modifiedAt', $record->get('datechanged'))));
 
+        $content->setStatus($record->get('status'));
+
         // Make sure depublishAt is `null`, and doesn't get defaulted to "now".
         if ($record->get('depublishedAt') || $record->get('datedepublish')) {
             $content->setDepublishedAt(new Carbon($record->get('depublishedAt', $record->get('datedepublish'))));
