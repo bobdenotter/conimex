@@ -268,6 +268,17 @@ class Import
                     }
                 }
             }
+
+            if ($contentType['taxonomy']->isNotEmpty()) {
+                $relationName = $contentType['taxonomy'][0];
+                foreach($record[$relationName] as $taxonomy) {
+                    $content->addTaxonomy($this->taxonomyRepository->factory(
+                        $relationName,
+                        $taxonomy['slug'],
+                        $taxonomy['name']
+                    ));
+                }
+            }
         }
 
         // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
@@ -344,6 +355,8 @@ class Import
         $content->setCreatedAt(new Carbon($record->get('createdAt', $record->get('datecreated'))));
         $content->setPublishedAt(new Carbon($record->get('publishedAt', $record->get('datepublish'))));
         $content->setModifiedAt(new Carbon($record->get('modifiedAt', $record->get('datechanged'))));
+
+        $content->setStatus($record->get('status'));
 
         // Make sure depublishAt is `null`, and doesn't get defaulted to "now".
         if ($record->get('depublishedAt') || $record->get('datedepublish')) {
