@@ -268,6 +268,18 @@ class Import
                     }
                 }
             }
+
+            if ($contentType['taxonomy']->isNotEmpty()) {
+                $relationName = $contentType['taxonomy'][0];
+                // dd($relationName[0]);
+                foreach($record[$relationName] as $taxonomy) {
+                    $content->addTaxonomy($this->taxonomyRepository->factory(
+                        $relationName,
+                        $taxonomy['slug'],
+                        $taxonomy['name']
+                    ));
+                }
+            }
         }
 
         // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
