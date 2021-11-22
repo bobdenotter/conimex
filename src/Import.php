@@ -303,17 +303,17 @@ class Import
                     }
                 }
             }
+        }
 
-            if ($contentType['taxonomy']->isNotEmpty()) {
-                foreach ($contentType['taxonomy'] as $taxonomy) {
-                    $relationName = $taxonomy;
-                    foreach ($record[$relationName] as $taxonomy) {
-                        $content->addTaxonomy($this->taxonomyRepository->factory(
-                            $relationName,
-                            $taxonomy['slug'],
-                            $taxonomy['name']
-                        ));
-                    }
+        if ($contentType['taxonomy']->isNotEmpty()) {
+            foreach ($contentType['taxonomy'] as $taxonomy) {
+                $relationName = $taxonomy;
+                foreach ($record[$relationName] as $taxonomy) {
+                    $content->addTaxonomy($this->taxonomyRepository->factory(
+                        $relationName,
+                        $taxonomy['slug'],
+                        $taxonomy['name']
+                    ));
                 }
             }
         }
