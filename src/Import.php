@@ -306,7 +306,7 @@ class Import
 
             if ($contentType['taxonomy']->isNotEmpty()) {
                 $relationName = $contentType['taxonomy'][0];
-                foreach($record[$relationName] as $taxonomy) {
+                foreach($record[$relationName] ?? [] as $taxonomy) {
                     $content->addTaxonomy($this->taxonomyRepository->factory(
                         $relationName,
                         $taxonomy['slug'],
