@@ -14,6 +14,7 @@ use Bolt\Repository\RelationRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
 use Doctrine\ORM\EntityManagerInterface;
+use Tightenco\Collect\Support\Collection;
 
 class Export
 {
@@ -102,7 +103,13 @@ class Export
                 $currentItem['relations'] = [];
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
-                foreach (array_keys((array) $relationsDefinition) as $fieldName) {
+                // $relationsDefinition sometimes is a Collection, and sometimes (older code?) it is an array
+                if ($relationsDefinition instanceof Collection) {
+                    $fieldNames = $relationsDefinition->keys();
+                } else {
+                    $fieldNames = array_keys((array) $relationsDefinition);
+                }
+                foreach ($fieldNames as $fieldName) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
                     $relationsSlug = [];
 
