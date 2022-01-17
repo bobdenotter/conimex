@@ -104,7 +104,9 @@ class Export
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
                 // $relationsDefinition sometimes is a Collection, and sometimes (older code?) it is an array
-                if ($relationsDefinition instanceof Collection) {
+                if ($relationsDefinition instanceof \IteratorAggregate) {
+                    $fieldNames = $relationsDefinition->getIterator();
+                } else if ($relationsDefinition instanceof Collection) {
                     $fieldNames = $relationsDefinition->keys();
                 } else {
                     $fieldNames = array_keys((array) $relationsDefinition);
