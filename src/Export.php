@@ -14,7 +14,6 @@ use Bolt\Repository\RelationRepository;
 use Bolt\Repository\UserRepository;
 use Bolt\Version;
 use Doctrine\ORM\EntityManagerInterface;
-use Tightenco\Collect\Support\Collection;
 
 class Export
 {
@@ -106,8 +105,6 @@ class Export
                 // $relationsDefinition sometimes is a Collection, and sometimes (older code?) it is an array
                 if ($relationsDefinition instanceof \IteratorAggregate) {
                     $fieldNames = $relationsDefinition->getIterator();
-                } else if ($relationsDefinition instanceof Collection) {
-                    $fieldNames = $relationsDefinition->keys();
                 } else {
                     $fieldNames = array_keys((array) $relationsDefinition);
                 }
