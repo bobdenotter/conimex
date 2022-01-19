@@ -102,7 +102,13 @@ class Export
                 $currentItem['relations'] = [];
                 $relationsDefinition = $record->getDefinition()->get('relations', []);
 
-                foreach (array_keys((array) $relationsDefinition) as $fieldName) {
+                // $relationsDefinition sometimes is a Collection, and sometimes (older code?) it is an array
+                if ($relationsDefinition instanceof \IteratorAggregate) {
+                    $fieldNames = $relationsDefinition->getIterator();
+                } else {
+                    $fieldNames = array_keys((array) $relationsDefinition);
+                }
+                foreach ($fieldNames as $fieldName) {
                     $relations = $this->relationRepository->findRelations($record, $fieldName);
                     $relationsSlug = [];
 
