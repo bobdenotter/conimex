@@ -104,7 +104,12 @@ class Export
 
                 // $relationsDefinition sometimes is a Collection, and sometimes (older code?) it is an array
                 if ($relationsDefinition instanceof \IteratorAggregate) {
-                    $fieldNames = $relationsDefinition->getIterator();
+                    // This conversion to get the keys by iterating, and later iterating over the keys is a bit wasteful,
+                    // I've put it like this to minimize changes to the rest of the code.
+                    $fieldNames = [];
+                    foreach ($relationsDefinition->getIterator() as $key => $val) {
+                        $fieldNames[] = $key;
+                    };
                 } else {
                     $fieldNames = array_keys((array) $relationsDefinition);
                 }
