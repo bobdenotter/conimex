@@ -441,7 +441,7 @@ class Import
             return false;
         }
 
-        foreach (keys($item) as $key) {
+        foreach (array_keys($item) as $key) {
             if (! preg_match('/^[a-z]{2}([_-][a-z]{2,3})?$/i', $key)) {
                 return false;
             }
