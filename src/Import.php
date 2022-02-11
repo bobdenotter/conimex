@@ -482,18 +482,11 @@ class Import
 
             $user = new User();
 
-            $roles = $importUser->get('roles');
-
-            // Bolt 3 fallback
-            if (! in_array('ROLE_USER', $roles, true) && ! in_array('ROLE_EDITOR', $roles, true)) {
-                $roles[] = 'ROLE_EDITOR';
-            }
-
             $user->setDisplayName($importUser->get('displayName', $importUser->get('displayname')));
             $user->setUsername($importUser->get('username'));
             $user->setEmail($importUser->get('email'));
             $user->setPassword($importUser->get('password'));
-            $user->setRoles($roles);
+            $user->setRoles($this->parseRoles($importUser->get('roles')));
             $user->setLocale($importUser->get('locale', 'en'));
             $user->setBackendTheme($importUser->get('backendTheme', 'default'));
             $user->setStatus($importUser->get('status', ($importUser->get('enabled') ? 'enabled' : 'disabled')));
@@ -522,5 +515,30 @@ class Import
         }
 
         return $result;
+    }
+
+    private function parseRoles(array $roles = []): array
+    {
+        $mapping = [
+            'root' => 'ROLE_ADMIN',
+            'admin' => 'ROLE_ADMIN',
+            'chief-editor' => 'ROLE_CHIEF_EDITOR',
+            'editor' => 'ROLE_EDITOR',
+            'developer' => 'ROLE_DEVELOPER',
+            'everyone' => 'ROLE_USER',
+        ];
+
+        foreach ($roles as $key => $role) {
+            if (array_key_exists($role, $mapping)) {
+                $roles[$key] = $mapping[$role];
+            }
+        }
+
+        // Bolt 3 fallback
+        if (empty(array_intersect(['ROLE_USER', 'ROLE_EDITOR'], $roles))) {
+            $roles[] = 'ROLE_EDITOR';
+        }
+
+        return array_unique($roles);
     }
 }
