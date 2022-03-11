@@ -404,15 +404,19 @@ class Import
 
         //import relations
         foreach ($content->getDefinition()->get('relations') as $key => $relation) {
-            if (isset($record[$key])) {
+            if (isset($record['relations'][$key]) || isset($record[$key])) {
+
+                // Bolt 4+ exports have relations under a separate `relations:` , whereas Bolt 3 lumps them in with the regular fields
+                $relationValue = isset($record['relations'][$key]) ? $record['relations'][$key] : $record[$key];
+
                 // Remove old ones
-                $currentRelations = $this->relationRepository->findRelations($content, null, null, false);
+                $currentRelations = $this->relationRepository->findRelations($content, $key, null, false);
                 foreach ($currentRelations as $currentRelation) {
                     $this->em->remove($currentRelation);
                 }
 
                 //create new relation
-                foreach ($record[$key] as $relationSource) {
+                foreach ($relationValue as $relationSource) {
                     $item = explode('/', $relationSource);
                     $contentType = ContentType::factory($item[0], $this->config->get('contenttypes'));
                     $contentTo = $this->contentRepository->findOneBySlug($item[1], $contentType);
