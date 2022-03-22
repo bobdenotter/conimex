@@ -93,7 +93,11 @@ class SelectFields
             foreach ($selectFieldData as $selectFieldValue) {
                 $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldValue);
             }
-        } else {
+
+            return $data;
+        }
+
+        if (!empty($selectFieldData)) {
             $data[] = $this->querySelectFieldReferencedData($selectFieldDefinition, $selectFieldData);
         }
 
@@ -139,10 +143,18 @@ class SelectFields
 
     private function fetchReferencedRecordSlug($contentType, $selectFieldValue)
     {
+        if (empty($selectFieldValue)) {
+            return;
+        }
+
         $criteria['contentType'] = $contentType;
         $criteria['id'] = $selectFieldValue;
 
         $referencedRecord = $this->contentRepository->findBy($criteria, [], 1);
+
+        if (empty($referencedRecord)) {
+            return;
+        }
 
         return $referencedRecord[0]->getFieldValues()['slug'];
     }
