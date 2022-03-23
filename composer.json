@@ -27,5 +27,12 @@
     "prefer-stable": true,
     "extra": {
         "entrypoint": "BobdenOtter\\Conimex\\Extension"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true,
+            "drupol/composer-packages": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }

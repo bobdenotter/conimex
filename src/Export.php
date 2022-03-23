@@ -41,7 +41,7 @@ class Export
         $this->dbVersion = $dbVersion;
     }
 
-    public function export(?string $contentType, string $format = 'yaml')
+    public function export(?string $contentType, string $format = 'yaml'): string
     {
         $output = [];
 
@@ -55,7 +55,7 @@ class Export
         return $parser->parse($output);
     }
 
-    private function buildMeta()
+    private function buildMeta(): array
     {
         return [
             'date' => date('c'),
@@ -64,7 +64,7 @@ class Export
         ];
     }
 
-    private function buildUsers()
+    private function buildUsers(): array
     {
         $users = [];
 
@@ -78,7 +78,7 @@ class Export
         return $users;
     }
 
-    private function buildContent(?string $contentType)
+    private function buildContent(?string $contentType): array
     {
         $offset = 0;
         $limit = 100;
@@ -110,9 +110,10 @@ class Export
                     // This conversion to get the keys by iterating, and later iterating over the keys is a bit wasteful,
                     // I've put it like this to minimize changes to the rest of the code.
                     $fieldNames = [];
-                    foreach ($relationsDefinition->getIterator() as $key => $val) {
+
+                    foreach (array_keys(iterator_to_array($relationsDefinition->getIterator())) as $key) {
                         $fieldNames[] = $key;
-                    };
+                    }
                 } else {
                     $fieldNames = array_keys((array) $relationsDefinition);
                 }
@@ -128,11 +129,8 @@ class Export
                 }
 
                 $content[] = $currentItem;
-
             }
             $offset++;
-
-
         } while ($contentEntities);
 
         return $content;
