@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BobdenOtter\Conimex;
 
+use Bolt\Common\Str;
 use Bolt\Configuration\Config;
 use Bolt\Configuration\Content\ContentType;
 use Bolt\Controller\Backend\ContentEditController;
@@ -144,7 +145,7 @@ class Import
         }
 
         /** @var Content $content */
-        $content = $this->contentRepository->findOneBySlug($slug, $contentType);
+        $content = $this->contentRepository->findOneBySlug(Str::slug($slug), $contentType);
 
         if (! $content) {
             $content = new Content($contentType);

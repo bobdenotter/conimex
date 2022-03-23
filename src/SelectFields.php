@@ -127,6 +127,5 @@ class SelectFields
             'reference' => sprintf('%s/%s' , $referencedRecord[0]->getContentType(), $referencedRecord[0]->getFieldValues()['slug']),
         ];
     }
-
 }
 
