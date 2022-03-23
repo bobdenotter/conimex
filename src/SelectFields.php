@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BobdenOtter\Conimex;
 
 use Bolt\Entity\Content;
@@ -24,7 +26,7 @@ class SelectFields
         $this->contentRepository = $contentRepository;
     }
 
-    private function getSelectFields()
+    private function getSelectFields(): Collection
     {
         $this->selectFields = collect();
 
@@ -33,13 +35,12 @@ class SelectFields
         return $this->selectFields;
     }
 
-    private function getSelectFieldsInner($fields)
+    private function getSelectFieldsInner($fields): void
     {
-        foreach($fields as $slug => $field) {
-            if ($field->get('type') == 'select') {
-
+        foreach ($fields as $slug => $field) {
+            if ($field->get('type') === 'select') {
                 // Stupid 'slug' isn't always set.
-                if (!array_key_exists('slug', $field)) {
+                if (! array_key_exists('slug', $field)) {
                     $field['slug'] = $slug;
                 }
                 $this->selectFields->add($field);
@@ -60,8 +61,7 @@ class SelectFields
 
     private function updateSelectFieldsInner(array $fields): array
     {
-        foreach($fields as $key => $field) {
-
+        foreach ($fields as $key => $field) {
             // Iterate over Collections
             if (in_array($key, ['collection'], true)) {
                 $fields[$key] = $this->updateSelectFieldsInner($field);
@@ -69,8 +69,7 @@ class SelectFields
 
             // Iterate over Sets
             if (is_array($field) && array_key_exists(0, $field)) {
-                foreach($field as $setKey => $setField) {
-
+                foreach ($field as $setKey => $setField) {
                     if (is_array($setField) && array_key_exists('value', $setField)) {
                         if ($this->selectFields->firstWhere('slug', $setField['name'])) {
                             // This is a Select field, update it!
@@ -92,7 +91,7 @@ class SelectFields
         return $fields;
     }
 
-    private function populateSelectFieldReferencedData($selectFieldData)
+    private function populateSelectFieldReferencedData($selectFieldData): array
     {
         $data = [];
 
@@ -104,28 +103,29 @@ class SelectFields
             return $data;
         }
 
-        if (!empty($selectFieldData)) {
+        if (! empty($selectFieldData)) {
             $data[] = $this->querySelectFieldReferencedData($selectFieldData);
         }
 
         return $data;
     }
 
-    private function querySelectFieldReferencedData($selectFieldValue)
+    private function querySelectFieldReferencedData($selectFieldValue): ?array
     {
-        if (!$selectFieldValue) {
+        if (! $selectFieldValue) {
             return null;
         }
 
-        $data = [];
-
         $referencedRecord = $this->contentRepository->findBy(['id' => $selectFieldValue], [], 1);
+
+        if (empty($referencedRecord)) {
+            return null;
+        }
 
         // Set the data of the referenced entity to fetch it when running import
         return [
             'id' => $selectFieldValue,
-            'reference' => sprintf('%s/%s' , $referencedRecord[0]->getContentType(), $referencedRecord[0]->getFieldValues()['slug']),
+            'reference' => sprintf('%s/%s', $referencedRecord[0]->getContentType(), $referencedRecord[0]->getFieldValues()['slug']),
         ];
     }
 }
-

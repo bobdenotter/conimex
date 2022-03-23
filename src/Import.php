@@ -21,11 +21,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tightenco\Collect\Support\Collection;
-use function array_merge;
-use function explode;
-use function is_array;
-use function is_iterable;
-use function is_string;
 
 class Import
 {
@@ -170,7 +165,7 @@ class Import
                 }
 
                 // Handle geolocation import
-                if ($fieldDefinition['type'] == "geolocation") {
+                if ($fieldDefinition['type'] === 'geolocation') {
                     // Replace the old key names for the new Geolocation field key names
                     $keyReplacements = [
                         'formatted_address' => 'search',
@@ -179,7 +174,7 @@ class Import
                     ];
 
                     foreach ($item as $geoKey => $value) {
-                        if(array_key_exists($geoKey, $keyReplacements)) {
+                        if (array_key_exists($geoKey, $keyReplacements)) {
                             $item[$keyReplacements[$geoKey]] = $item[$geoKey];
                             unset($item[$geoKey]);
                         } else {
@@ -188,17 +183,17 @@ class Import
                         }
                     }
 
-                    if (isset($item['lat']) && isset($item['long']) ) {
+                    if (isset($item['lat']) && isset($item['long'])) {
                         $item['selected'] = 'search';
-                        $item['zoom'] = "13";
+                        $item['zoom'] = '13';
                     } else {
                         // Reset data and default it to empty values
                         unset($item);
-                        $item['search'] = "";
-                        $item['selected'] = "";
-                        $item['zoom'] = "";
-                        $item['lat'] = "";
-                        $item['long'] = "";
+                        $item['search'] = '';
+                        $item['selected'] = '';
+                        $item['zoom'] = '';
+                        $item['lat'] = '';
+                        $item['long'] = '';
                     }
 
                     $item = json_encode($item);
@@ -297,7 +292,7 @@ class Import
                         continue;
                     }
 
-                    if ($configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] == 'tags') {
+                    if ($configForTaxonomy['options']->get($taxo['slug']) !== null || $configForTaxonomy['behaves_like'] === 'tags') {
                         $content->addTaxonomy($this->taxonomyRepository->factory($key,
                             $taxo['slug'],
                             $configForTaxonomy['options']->get($taxo['slug'])));
@@ -322,15 +317,14 @@ class Import
         // If there were any repeaters/blocks in to be saved as collections/sets, do so here.
         // Save it the way the contentEditController saves it.
         $this->contentEditController->updateCollections($content, $this->data, null);
-        $this->data = []; // unset it for the next time it's needed.
+        // unset it for the next time it's needed.
+        $this->data = [];
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-
                 $fieldDefinition = $content->getDefinition()->get('fields')[$key];
                 // Handle collections
                 if ($fieldDefinition['type'] === 'collection') {
-
                     $data = $this->preFillCollection($fieldDefinition, $key, $item);
 
                     $this->contentEditController->updateCollections($content, $data, null);
@@ -381,9 +375,8 @@ class Import
         //import relations
         foreach ($content->getDefinition()->get('relations') as $key => $relation) {
             if (isset($record['relations'][$key]) || isset($record[$key])) {
-
                 // Bolt 4+ exports have relations under a separate `relations:` , whereas Bolt 3 lumps them in with the regular fields
-                $relationValue = isset($record['relations'][$key]) ? $record['relations'][$key] : $record[$key];
+                $relationValue = $record['relations'][$key] ?? $record[$key];
 
                 // Remove old ones
                 $currentRelations = $this->relationRepository->findRelations($content, $key, null, false);
@@ -432,7 +425,6 @@ class Import
 
     private function preFillCollection($fieldDefinition, $key, $collectionArray): array
     {
-
         $data = [
             'collections' => [
                 $key => [],
@@ -440,7 +432,8 @@ class Import
         ];
 
         $i = 1;
-        foreach ($collectionArray as $fieldKey => $fieldData) {
+
+        foreach ($collectionArray as $fieldData) {
             $data['collections'][$key][$fieldData['name']][$i] = $this->nestedSelectResolver($fieldData);
             $data['collections'][$key]['order'][] = $i;
             $i++;
@@ -449,28 +442,26 @@ class Import
         return $data;
     }
 
-    private function nestedSelectResolver($fieldData)
+    private function nestedSelectResolver($fieldData): array
     {
-        if ($fieldData['type'] == 'select') {
+        if ($fieldData['type'] === 'select') {
             return $this->getMultipleValues($fieldData['value']);
         }
 
-        if ($fieldData['type'] == 'set') {
-            foreach($fieldData['value'] as $key => $value) {
+        if ($fieldData['type'] === 'set') {
+            foreach ($fieldData['value'] as $key => $value) {
                 if (is_iterable($value) &&
                     array_key_exists(0, $value) &&
                     (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
                     $fieldData['value'][$key] = $this->getMultipleValues($value);
                 }
-
             }
-
         }
 
         return $fieldData['value'];
     }
 
-    private function guesstimateUser(Collection $record)
+    private function guesstimateUser(Collection $record): User
     {
         $user = null;
 
@@ -517,7 +508,7 @@ class Import
         }
     }
 
-    private function getValues(string $id)
+    private function getValues(string $id): int
     {
         $contentType = $this->config->getContentType(explode('/', $id)[0]);
         $slug = explode('/', $id)[1];
@@ -526,8 +517,6 @@ class Import
             return $referencedEntity->getId();
         }
     }
-
-
 
     private function getMultipleValues(array $item): array
     {
