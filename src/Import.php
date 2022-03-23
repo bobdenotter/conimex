@@ -213,6 +213,14 @@ class Import
                         if (is_array(current(array_values($fieldData)))) {
                             // We are importing a block
                             foreach ($fieldData as $setName => $setValue) {
+
+                                // Turn `['value' => 123, '_id' => 'pages/mission']` into the correct Content ID
+                                if (is_iterable($value) &&
+                                    array_key_exists(0, $value) &&
+                                    (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
+                                    $value = $this->getMultipleValues($value);
+                                }
+							    
                                 $this->data['collections'][$key][$setName][$i] = $setValue;
                                 $this->data['collections'][$key]['order'][] = $i;
                                 $i++;
@@ -225,8 +233,17 @@ class Import
                             $i++;
 
                             foreach ($fieldData as $name => $value) {
+
+                                // Turn `['value' => 123, '_id' => 'pages/mission']` into the correct Content ID
+                                if (is_iterable($value) &&
+                                    array_key_exists(0, $value) &&
+                                    (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
+                                    $value = $this->getMultipleValues($value);
+                                }
+
                                 $this->data['collections'][$key][$setName][$i][$name] = $value;
                                 $this->data['collections'][$key]['order'][] = $i;
+
                             }
                         }
                     }
@@ -325,7 +342,7 @@ class Import
                 $fieldDefinition = $content->getDefinition()->get('fields')[$key];
                 // Handle collections
                 if ($fieldDefinition['type'] === 'collection') {
-                    $data = $this->preFillCollection($fieldDefinition, $key, $item);
+                    $data = $this->preFillCollection($key, $item);
 
                     $this->contentEditController->updateCollections($content, $data, null);
                 } else {
@@ -423,7 +440,7 @@ class Import
         return true;
     }
 
-    private function preFillCollection($fieldDefinition, $key, $collectionArray): array
+    private function preFillCollection($key, $collectionArray): array
     {
         $data = [
             'collections' => [
@@ -450,6 +467,7 @@ class Import
 
         if ($fieldData['type'] === 'set') {
             foreach ($fieldData['value'] as $key => $value) {
+                // Turn `['id' => 123, 'reference' => 'pages/mission']` into the correct Content ID
                 if (is_iterable($value) &&
                     array_key_exists(0, $value) &&
                     (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
