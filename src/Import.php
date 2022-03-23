@@ -325,20 +325,12 @@ class Import
         // Import Bolt 4 Fields
         foreach ($record->get('fields', []) as $key => $item) {
             if ($content->hasFieldDefined($key)) {
-                // Handle collections
-                if ($content->getDefinition()->get('fields')[$key]['type'] === 'collection') {
-                    $data = [
-                        'collections' => [
-                            $key => [],
-                        ],
-                    ];
 
-                    $i = 1;
-                    foreach ($item as $fieldData) {
-                        $data['collections'][$key][$fieldData['name']][$i] = $fieldData['value'];
-                        $data['collections'][$key]['order'][] = $i;
-                        $i++;
-                    }
+                $fieldDefinition = $content->getDefinition()->get('fields')[$key];
+                // Handle collections
+                if ($fieldDefinition['type'] === 'collection') {
+
+                    $data = $this->preFillCollection($fieldDefinition, $key, $item);
 
                     $this->contentEditController->updateCollections($content, $data, null);
                 } else {
@@ -351,27 +343,10 @@ class Import
                         $field = $this->contentEditController->getFieldToUpdate($content, $key);
 
                         // Handle select fields with referenced entities
-                        if ($content->getDefinition()->get('fields')[$key]['type'] === 'select') {
-                            $values = $content->getDefinition()->get('fields')[$key]->get('values');
-                            $result = [];
-
-                            // Check if this select field Definition has referenced entities
-                            if (is_string($values) && mb_strpos($values, '/') !== false) {
-                                if (is_iterable($item)) {
-                                    foreach ($item as $key => $itemValue) {
-                                        $contentType = $this->config->getContentType(explode('/', $itemValue['reference'])[0]);
-                                        $slug = explode('/', $itemValue['reference'])[1];
-                                        $referencedEntity = $this->contentRepository->findOneBySlug($slug, $contentType);
-
-                                        if ($referencedEntity instanceof Content) {
-                                            $result[] = $referencedEntity->getId();
-                                        }
-                                    }
-                                }
-                            }
-
-                            $item = $result;
+                        if ($fieldDefinition['type'] === 'select') {
+                            $item = $this->getMultipleValues($item);
                         }
+
                         $this->contentEditController->updateField($field, $item, null);
                     }
                 }
@@ -454,6 +429,46 @@ class Import
         return true;
     }
 
+    private function preFillCollection($fieldDefinition, $key, $collectionArray): array
+    {
+
+        $data = [
+            'collections' => [
+                $key => [],
+            ],
+        ];
+
+        $i = 1;
+        foreach ($collectionArray as $fieldKey => $fieldData) {
+            $data['collections'][$key][$fieldData['name']][$i] = $this->nestedSelectResolver($fieldData);
+            $data['collections'][$key]['order'][] = $i;
+            $i++;
+        }
+
+        return $data;
+    }
+
+    private function nestedSelectResolver($fieldData)
+    {
+        if ($fieldData['type'] == 'select') {
+            return $this->getMultipleValues($fieldData['value']);
+        }
+
+        if ($fieldData['type'] == 'set') {
+            foreach($fieldData['value'] as $key => $value) {
+                if (is_iterable($value) &&
+                    array_key_exists(0, $value) &&
+                    (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
+                    $fieldData['value'][$key] = $this->getMultipleValues($value);
+                }
+
+            }
+
+        }
+
+        return $fieldData['value'];
+    }
+
     private function guesstimateUser(Collection $record)
     {
         $user = null;
@@ -511,11 +526,15 @@ class Import
         }
     }
 
+
+
     private function getMultipleValues(array $item): array
     {
         $result = [];
         foreach ($item as $itemValue) {
-            $result[] = $this->getValues($itemValue['_id']);
+            if (is_iterable($itemValue)) {
+                $result[] = $this->getValues($itemValue['_id'] ?? $itemValue['reference']);
+            }
         }
 
         return $result;
