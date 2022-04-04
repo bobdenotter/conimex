@@ -109,7 +109,7 @@ class Import
             /** @var ContentType $contentType */
             $contentType = $this->config->getContentType($record->get('contentType', $contenttypeslug));
 
-            if (!$contentType) {
+            if (! $contentType) {
                 $this->io->error('Requested ContentType ' . $record->get('contentType', $contenttypeslug) . ' is not defined in contenttypes.yaml.');
 
                 return;
@@ -142,7 +142,7 @@ class Import
         /** @var Content $content */
         $content = $this->contentRepository->findOneBySlug(Str::slug($slug), $contentType);
 
-        if (!$content) {
+        if (! $content) {
             $content = new Content($contentType);
             $content->setAuthor($user);
         }
@@ -156,10 +156,10 @@ class Import
                 // Convert 'file' in incoming image or file to 'filename'
                 if (in_array($fieldDefinition['type'], ['image', 'file'], true)) {
                     $item = (array) $item;
-                    $item['filename'] = !empty($item['file']) ? $item['file'] : current($item);
+                    $item['filename'] = ! empty($item['file']) ? $item['file'] : current($item);
 
                     // If no filename is set, don't import a broken/missing image
-                    if (!$item['filename']) {
+                    if (! $item['filename']) {
                         continue;
                     }
                 }
@@ -298,11 +298,11 @@ class Import
                 foreach ($item as $taxo) {
                     $configForTaxonomy = $this->config->getTaxonomy($key);
 
-                    if (!$taxo['slug']) {
+                    if (! $taxo['slug']) {
                         continue;
                     }
 
-                    if (!is_object($configForTaxonomy)) {
+                    if (! is_object($configForTaxonomy)) {
                         continue;
                     }
 
@@ -420,16 +420,16 @@ class Import
     {
         $fieldDefinition = $content->getDefinition()->get('fields')->get($key);
 
-        if (!$fieldDefinition['localize']) {
+        if (! $fieldDefinition['localize']) {
             return false;
         }
 
-        if (!is_array($item)) {
+        if (! is_array($item)) {
             return false;
         }
 
         foreach (array_keys($item) as $key) {
-            if (!preg_match('/^[a-z]{2}([_-][a-z]{2,3})?$/i', $key)) {
+            if (! preg_match('/^[a-z]{2}([_-][a-z]{2,3})?$/i', $key)) {
                 return false;
             }
         }
@@ -486,7 +486,7 @@ class Import
         }
 
         // Fall back to the first user we can find. 🤷‍
-        if (!$user) {
+        if (! $user) {
             $user = $this->userRepository->findOneBy([]);
         }
 
