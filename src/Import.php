@@ -517,6 +517,12 @@ class Import
             $user->setBackendTheme($importUser->get('backendTheme', 'default'));
             $user->setStatus($importUser->get('status', ($importUser->get('enabled') ? 'enabled' : 'disabled')));
 
+            // Override @GeneratedValue strategy            
+            $metadata = $this->em->getClassMetadata(get_class($user));
+            $metadata->setIdGeneratorType(\Doctrine\ORM\Mapping\ClassMetadata::GENERATOR_TYPE_NONE);
+            $metadata->setIdGenerator(new \Doctrine\ORM\Id\AssignedGenerator());
+            $user->setId($importUser->get('id'));
+            
             $this->em->persist($user);
 
             $this->em->flush();
