@@ -321,7 +321,7 @@ class Import
                 foreach ($record[$relationName] ?? [] as $taxonomy) {
                     $content->addTaxonomy($this->taxonomyRepository->factory(
                         $relationName,
-                        $taxonomy['slug'],
+                        (string) $taxonomy['slug'],
                         $taxonomy['name']
                     ));
                 }
