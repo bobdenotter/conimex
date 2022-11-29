@@ -230,13 +230,24 @@ class Import
 
                             $setName = mb_substr($key, 0, -1);
                             $i++;
-
+                            $collectionFieldDefinition = $content->getDefinition()->get('fields')->get($key)->get('fields')->get($setName)->get('fields');
                             foreach ($fieldData as $name => $value) {
                                 // Turn `['value' => 123, '_id' => 'pages/mission']` into the correct Content ID
                                 if (is_iterable($value) &&
                                     array_key_exists(0, $value) &&
                                     (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
                                     $value = $this->getMultipleValues($value);
+                                }
+
+                                // Convert 'file' in incoming image or file to 'filename'
+                                if (in_array($collectionFieldDefinition->get($name)['type'], ['image', 'file'], true)) {
+                                    $value = (array) $value;
+                                    $value['filename'] = ! empty($value['file']) ? $value['file'] : current($value);
+
+                                    // If no filename is set, don't import a broken/missing image
+                                    if (! $value['filename']) {
+                                        continue;
+                                    }
                                 }
 
                                 $this->data['collections'][$key][$setName][$i][$name] = $value;
@@ -517,12 +528,12 @@ class Import
             $user->setBackendTheme($importUser->get('backendTheme', 'default'));
             $user->setStatus($importUser->get('status', ($importUser->get('enabled') ? 'enabled' : 'disabled')));
 
-            // Override @GeneratedValue strategy            
+            // Override @GeneratedValue strategy
             $metadata = $this->em->getClassMetadata(get_class($user));
             $metadata->setIdGeneratorType(\Doctrine\ORM\Mapping\ClassMetadata::GENERATOR_TYPE_NONE);
             $metadata->setIdGenerator(new \Doctrine\ORM\Id\AssignedGenerator());
             $user->setId($importUser->get('id'));
-            
+
             $this->em->persist($user);
 
             $this->em->flush();
