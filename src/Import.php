@@ -214,10 +214,10 @@ class Import
                             // We are importing a block
                             foreach ($fieldData as $setName => $setValue) {
                                 // Turn `['value' => 123, '_id' => 'pages/mission']` into the correct Content ID
-                                if (is_iterable($value) &&
-                                    array_key_exists(0, $value) &&
-                                    (array_key_exists('_id', $value[0]) || array_key_exists('reference', $value[0]))) {
-                                    $value = $this->getMultipleValues($value);
+                                if (is_iterable($setValue) &&
+                                    array_key_exists(0, $setValue) &&
+                                    (array_key_exists('_id', $setValue[0]) || array_key_exists('reference', $setValue[0]))) {
+                                    $setValue = $this->getMultipleValues($setValue);
                                 }
 
                                 $this->data['collections'][$key][$setName][$i] = $setValue;
