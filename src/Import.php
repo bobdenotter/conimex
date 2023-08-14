@@ -261,7 +261,7 @@ class Import
                                     $result[] = $this->getValues($itemValue['_id']);
                                 } else {
                                     if (is_array($item[$itemValueKey])) {
-                                        $result = array_merge($this->getMultipleValues($itemValue), $result);
+                                        $result = array_merge($result, $this->getMultipleValues($itemValue));
                                     }
                                 }
                             }
